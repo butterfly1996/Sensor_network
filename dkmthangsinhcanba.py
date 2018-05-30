@@ -4,10 +4,12 @@ from matplotlib.patches import Wedge
 import random
 
 class Sensor():
-    def __init__(self, xi, yi, betai):
+    def __init__(self, xi, yi, betai, r):
         self.xi = xi
         self.yi = yi
         self.betai = betai
+        self.r = r
+        self.lr = 2 * self.r if self.alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(self.alpha))
 class Sensors_field():
     def __init__(self, lenght, height, num_station, num_mobile, r, alpha):
         self.L=lenght
@@ -18,7 +20,7 @@ class Sensors_field():
         self.alpha = alpha
 
         self.r = r
-        self.lr = 2*self.r if self.alpha>=np.pi/2 else np.max(self.r, 2*r*np.sin(self.alpha))
+
         #sensor la danh sach cac sensor gom cac truong betai la huong voi tia Ox, li la location (xi, yi)
         self.sensors_list = []
         #tap cac duong di dinh khong giao nhau co tong do dai nho nhat
@@ -27,9 +29,9 @@ class Sensors_field():
         self.P_k_q = []
         #tap k barriers toi uu cua bai toan Min-num-mobile(k)
         self.P_k = []
-    def create_sensors_randomly(self, num_sensor = 100):
+    def create_sensors_randomly(self, num_sensor = 100, r=3):
         for i in range(0, num_sensor):
-            sensor = Sensor(xi=random.uniform(0, self.L), yi = random.uniform(0, self.H), betai= random.uniform(0, 360))
+            sensor = Sensor(xi=random.uniform(0, self.L), yi = random.uniform(0, self.H), betai= random.uniform(0, 360), r=r)
             self.sensors_list.append(sensor)
     def field_show(self):
         fig = plt.figure()
@@ -42,8 +44,8 @@ class Sensors_field():
         plt.show()
         pass
 if __name__ == '__main__':
-    sensor_field = Sensors_field(lenght=30, height=10, num_station=12, num_mobile=20, r=3, alpha=60)
-    sensor_field.create_sensors_randomly(num_sensor=sensor_field.n)
+    sensor_field = Sensors_field(lenght=30, height=10, num_station=12, num_mobile=20, alpha=60)
+    sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3)
     sensor_field.field_show()
 
 
