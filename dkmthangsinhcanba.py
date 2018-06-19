@@ -21,12 +21,12 @@ class Sensors_field():
         # # alpha la nua goc nhin cua sensor
         # self.alpha = alpha
         #
-        self.lr = 2 * self.r if self.alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(self.alpha))
-        self.xR = max(self.xi, self.xi+self.r*np.cos(self.betai-self.alpha), self.xi+self.r*np.cos(self.betai+self.alpha),
-        self.xi+self.r if -self.alpha <= -self.betai and -self.betai <= self.alpha else 0)
-        self.xL = min(self.xi, self.xi+self.r*np.cos(self.betai-self.alpha), self.xi+self.r*np.cos(self.betai+self.alpha),
-        self.xi+self.r if -self.alpha <= -self.betai and -self.betai <= self.alpha else self.xi+9*self.r)
-
+        # self.lr = 2 * self.r if self.alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(self.alpha))
+        # self.xR = max(self.xi, self.xi+self.r*np.cos(self.betai-self.alpha), self.xi+self.r*np.cos(self.betai+self.alpha),
+        # self.xi+self.r if -self.alpha <= -self.betai and -self.betai <= self.alpha else 0)
+        # self.xL = min(self.xi, self.xi+self.r*np.cos(self.betai-self.alpha), self.xi+self.r*np.cos(self.betai+self.alpha),
+        # self.xi+self.r if -self.alpha <= -self.betai and -self.betai <= self.alpha else self.xi+9*self.r)
+        self.sensors_list = []
     def create_sensors_randomly(self, num_sensor = 100, r=3, alpha=60):
         for i in range(0, num_sensor):
             sensor = Sensor(xi=random.uniform(0, self.L), yi = random.uniform(0, self.H), betai= random.uniform(0, 360), r=r, alpha=alpha)
@@ -64,9 +64,10 @@ class WBG(Sensors_field):
         pass
 
 if __name__ == '__main__':
-    sensor_field = Sensors_field(lenght=30, height=10)
-    sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
-
+    sensor_field = Sensors_field(lenght=10, height=10)
+    # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
+    sensor_field.add_sensor(Sensor(3, 3, 20, 2, 70))
+    sensor_field.add_sensor(Sensor(8, 3, 90, 2, 70))
     sensor_field.field_show()
 
 
