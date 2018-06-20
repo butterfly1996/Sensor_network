@@ -195,6 +195,7 @@ def closestDistanceBetweenArcAndLine(a0, a1, center, beta, r, alpha):
     return np.min(np.array(res))
 
 def minimum__sectors_distance(sensor1, sensor2):
+    # TODO: thang hai lam not phan sensor cua may di, k/c 2 sensor = min(khoang cach canh-canh, canh-cung, cung-cung)
     resultarray = []
     a0 = np.array(sensor1.xi, sensor1.yi)
     a1 = np.array(sensor1.xi + sensor1.r * np.cos(sensor1.betai - sensor1.alpha), sensor2.yi+sensor2.r*np.sin(sensor2.betai - sensor2.alpha))
