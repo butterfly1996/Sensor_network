@@ -48,17 +48,17 @@ class Sensors_field():
         plt.ylim(ymax = self.H, ymin = 0)
         plt.show()
         pass
-class WBG(Sensors_field):
-    def build_WBG():
-        pass
-    def dw(vi, vj):# weak distance
-        if (vi.xL <= vj.xL and vj.xL <= vi.xR) or (vj.xL <= vi.xL and vi.xL <= vj.xR):
-            return 0
-        #else
-    def ds(vi, vj):# strong distance
-        pass
-    def w(vi, vj):# weight
-        pass
+# class WBG(Sensors_field):
+#     def build_WBG():
+#         pass
+#     def dw(vi, vj):# weak distance
+#         if (vi.xL <= vj.xL and vj.xL <= vi.xR) or (vj.xL <= vi.xL and vi.xL <= vj.xR):
+#             return 0
+#         #else
+#     def ds(vi, vj):# strong distance
+#         pass
+#     def w(vi, vj):# weight
+#         pass
 
 if __name__ == '__main__':
     sensor_field = Sensors_field(lenght=30, height=10, num_station=12, num_mobile=20)
