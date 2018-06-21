@@ -197,20 +197,20 @@ def closestDistanceBetweenArcAndLine(a0, a1, center, beta, r, alpha):
 def minimum__sectors_distance(sensor1, sensor2):
     # TODO: thang hai lam not phan sensor cua may di, k/c 2 sensor = min(khoang cach canh-canh, canh-cung, cung-cung)
     resultarray = []
-    a0 = np.array(sensor1.xi, sensor1.yi)
-    a1 = np.array(sensor1.xi + sensor1.r * np.cos(sensor1.betai - sensor1.alpha), sensor2.yi+sensor2.r*np.sin(sensor2.betai - sensor2.alpha))
-    b0 = np.array(sensor2.xi, sensor2.yi)
-    b1 = np.array(sensor2.xi + sensor2.r * np.cos(sensor2.betai - sensor2.alpha), sensor2.yi+sensor2.r*np.sin(sensor2.betai - sensor2.alpha))
-    result = closestDistanceBetweenLines(a0, a1, b0, b1)
-    resultarray.append(result)
-    ############################################################################################################3
-    a0 = np.array(sensor1.xi, sensor1.yi)
-    a1 = np.array(sensor1.xi + sensor1.r * np.cos(sensor1.betai - sensor1.alpha),
-                  sensor2.yi + sensor2.r * np.sin(sensor2.betai - sensor2.alpha))
-    b0 = np.array(sensor2.xi, sensor2.yi)
-    b1 = np.array(sensor2.xi + sensor2.r * np.cos(sensor2.betai - sensor2.alpha),
-                  sensor2.yi + sensor2.r * np.sin(sensor2.betai - sensor2.alpha))
-    result = closestDistanceBetweenLines(a0, a1, b0, b1)
-    resultarray.append(result)
-    ############################################################################################################3
-    pass
+    a0 = np.array([sensor1.xi, sensor1.yi])
+    a1 = np.array([sensor1.xi + sensor1.r * np.cos(sensor1.betai - sensor1.alpha), sensor1.yi+sensor1.r*np.sin(sensor1.betai - sensor1.alpha)])
+    a2 = np.array([sensor1.xi + sensor1.r * np.cos(sensor1.betai + sensor1.alpha), sensor1.yi+sensor1.r*np.sin(sensor1.betai + sensor1.alpha)])
+    b0 = np.array([sensor2.xi, sensor2.yi])
+    b1 = np.array([sensor2.xi + sensor2.r * np.cos(sensor2.betai - sensor2.alpha), sensor2.yi + sensor2.r * np.sin(sensor2.betai - sensor2.alpha)])
+    b2 = np.array([sensor2.xi + sensor2.r * np.cos(sensor2.betai + sensor2.alpha), sensor2.yi + sensor2.r * np.sin(sensor2.betai + sensor2.alpha)])
+    resultarray.append(closestDistanceBetweenLines(a0, a1, b0, b1))
+    resultarray.append(closestDistanceBetweenLines(a0, a1, b0, b2))
+    resultarray.append(closestDistanceBetweenLines(a0, a2, b0, b1))
+    resultarray.append(closestDistanceBetweenLines(a0, a2, b0, b2))
+    resultarray.append(closesDistanceBetweenArcs(a0, a1, sensor1.betai, sensor2.betai, sensor1.r, sensor1.alpha))
+    resultarray.append(closestDistanceBetweenArcAndLine(a0, a1, b0, sensor2.betai, sensor2.r, sensor2.alpha))
+    resultarray.append(closestDistanceBetweenArcAndLine(a0, a2, b0, sensor2.betai, sensor2.r, sensor2.alpha))
+    resultarray.append(closestDistanceBetweenArcAndLine(b0, b1, a0, sensor1.betai, sensor1.r, sensor1.alpha))
+    resultarray.append(closestDistanceBetweenArcAndLine(b0, b2, a0, sensor1.betai, sensor1.r, sensor1.alpha))
+
+    return np.min(np.array(resultarray))
