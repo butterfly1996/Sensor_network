@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from matplotlib.patches import Wedge
 import random
-
+import distance
 class Sensor():
     def __init__(self, xi, yi, betai, r, alpha):
         self.xi = xi
@@ -68,6 +68,7 @@ if __name__ == '__main__':
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
     sensor_field.add_sensor(Sensor(3, 3, 20, 2, 70))
     sensor_field.add_sensor(Sensor(8, 3, 90, 2, 70))
+    distance.minimum__sectors_distance(Sensor(3, 3, 20, 2, 70), Sensor(8, 3, 90, 2, 70))
     sensor_field.field_show()
 
 

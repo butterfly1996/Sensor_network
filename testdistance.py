@@ -105,6 +105,7 @@ def closestDistanceBetweenLines(a0,a1,b0,b1,clampAll=True,clampA0=True,clampA1=T
 
 def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
     res = []
+    dict_res = {}
     # arc1
     endpoint1 = center1 + np.array([r*np.cos(beta1+alpha), r*np.sin(beta1+alpha)])
     endpoint2 = center1 + np.array([r * np.cos(beta1 - alpha), r * np.sin(beta1 - alpha)])
@@ -112,6 +113,9 @@ def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
     endpoint3 = center2 + np.array([r * np.cos(beta2 + alpha), r * np.sin(beta2 + alpha)])
     endpoint4 = center2 + np.array([r * np.cos(beta2 - alpha), r * np.sin(beta2 - alpha)])
     #1: endpoints of two arcs
+    dict_res[tuple(endpoint1,endpoint3)] = np.linalg.norm(endpoint1-endpoint3)
+    print(dict_res)
+    print(1)
     res.append(np.linalg.norm(endpoint1-endpoint3))
     res.append(np.linalg.norm(endpoint1-endpoint4))
     res.append(np.linalg.norm(endpoint2-endpoint3))

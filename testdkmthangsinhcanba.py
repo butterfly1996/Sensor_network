@@ -1,4 +1,4 @@
-from dkmthangsinhcanba import Sensor, Sensors_field
+from sensors_field import Sensor, Sensors_field
 import numpy as np
 import matplotlib.pyplot as plt
 

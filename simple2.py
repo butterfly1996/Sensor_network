@@ -32,4 +32,4 @@ ga.nGenerations = 100
 ga.evolve(10)
 
 # Best individual
-print ga.bestIndividual()
+print (ga.bestIndividual())
