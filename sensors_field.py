@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from matplotlib.patches import Wedge
 import random
-import distance
+# import distance
 class Sensor():
     def __init__(self, xi, yi, betai, r, alpha):
         self.xi = xi
@@ -11,7 +11,7 @@ class Sensor():
         self.alpha = alpha
         self.r = r
         self.alpha = alpha
-        self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
+        # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
 class Sensors_field():
     def __init__(self, lenght, height):
         self.L=lenght
@@ -35,7 +35,7 @@ class Sensors_field():
         fig = plt.figure()
         ax = fig.add_subplot(111)
         for sens in self.sensors_list:
-            fov = Wedge((sens.xi, sens.yi), sens.r, sens.betai-sens.alpha, sens.betai+sens.alpha, color="r", alpha=0.5)
+            fov = Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color="r", alpha=0.5)
             ax.add_artist(fov)
         plt.xlim(xmax = self.L, xmin=0)
         plt.ylim(ymax = self.H, ymin = 0)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
     sensor_field.add_sensor(Sensor(3, 3, 20, 2, 70))
     sensor_field.add_sensor(Sensor(8, 3, 90, 2, 70))
-    distance.minimum__sectors_distance(Sensor(3, 3, 20, 2, 70), Sensor(8, 3, 90, 2, 70))
+    # distance.minimum__sectors_distance(Sensor(3, 3, 20, 2, 70), Sensor(8, 3, 90, 2, 70))
     sensor_field.field_show()
 
 
