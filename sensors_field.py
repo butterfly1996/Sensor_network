@@ -3,21 +3,28 @@ import numpy as np
 from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
+
 # import distance
+def angle(value):
+    # chuan hoa gia tri goc tu -pi den pi
+    return (value+np.pi) % (2*np.pi) - np.pi
+
 class Sensor():
     def __init__(self, xi, yi, betai, r, alpha):
         self.xi = xi
         self.yi = yi
-        while(betai>np.pi or betai<-np.pi):
-            if(betai>np.pi):
-                betai-=np.pi
-            if (betai < -np.pi):
-                betai += np.pi
-        while (alpha > np.pi or alpha < -np.pi):
-            if (alpha > np.pi):
-                alpha -= np.pi
-            if (alpha < -np.pi):
-                alpha += np.pi
+        # while(betai>np.pi or betai<-np.pi):
+        #     if(betai>np.pi):
+        #         betai-=np.pi
+        #     if (betai < -np.pi):
+        #         betai += np.pi
+        # while (alpha > np.pi or alpha < -np.pi):
+        #     if (alpha > np.pi):
+        #         alpha -= np.pi
+        #     if (alpha < -np.pi):
+        #         alpha += np.pi
+        betai = angle(betai)
+        alpha = angle(alpha)
         self.betai = betai
         self.alpha = alpha
         self.r = r
@@ -52,14 +59,17 @@ class Sensors_field():
             fov = Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color="r", alpha=0.5)
             ax.add_artist(fov)
         lines = []
-        show = True
-        for cupple_point in self.pointslist:
-             if cupple_point == None:
-                 show = False
-                 break
-        if show == True:
+        # show = True
+        # for cupple_point in self.pointslist:
+        #      if cupple_point == None:
+        #          show = False
+        #          break
+        # if show == True:
+        try:
             lc = mc.LineCollection(np.array(self.pointslist), linewidths=2)
-        ax.add_collection(lc)
+            ax.add_collection(lc)
+        except ValueError:
+            pass
         plt.xlim(xmax = self.L, xmin=0)
         plt.ylim(ymax = self.H, ymin = 0)
         plt.show()

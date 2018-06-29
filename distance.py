@@ -147,25 +147,42 @@ def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
     if (endpoint3[0]-center1[0]) == 0:
         phi = np.sign(endpoint3[1]-center1[1])*np.pi/2
     if is_between_angles(phi, angle(beta1-alpha), angle(beta1+alpha)):
-        res.append([endpoint3, np.array([center1[0]+r*np.cos(phi), center1[1]+r*np.sin(phi)]), np.linalg.norm(endpoint3-np.array([center1[0]+r*np.cos(phi), center1[1]+r*np.sin(phi)]))])
+        d = np.linalg.norm(endpoint3-center1)-r
+        if d > 0:
+            res.append([endpoint3, np.array([center1[0]+r*np.cos(phi), center1[1]+r*np.sin(phi)]), d])
+        else:
+            res.append([None, None, 0])
 
     phi = arctan((endpoint4[1] - center1[1]) , (endpoint4[0] - center1[0]))
     if (endpoint4[0]-center1[0]) == 0:
         phi = np.sign(endpoint4[1]-center1[1])*np.pi/2
     if is_between_angles(phi, angle(beta1-alpha), angle(beta1+alpha)):
-        res.append([endpoint4, np.array([center1[0] + r * np.cos(phi), center1[1] + r * np.sin(phi)]), np.linalg.norm(endpoint4 - np.array([center1[0] + r * np.cos(phi), center1[1] + r * np.sin(phi)]))])
+        d = np.linalg.norm(endpoint4 - center1) - r
+        if d > 0:
+            res.append([endpoint4, np.array([center1[0] + r * np.cos(phi), center1[1] + r * np.sin(phi)]), d])
+        else:
+            res.append([None, None, 0])
 
     phi = arctan((endpoint1[1] - center2[1]) , (endpoint1[0] - center2[0]))
     if (endpoint1[0] - center2[0]) == 0:
         phi = np.sign(endpoint1[1] - center2[1])*np.pi/2
     if is_between_angles(phi, angle(beta2 - alpha), angle(beta2 + alpha)):
-        res.append([endpoint1, np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]), np.linalg.norm(endpoint1 - np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]))])
+        d = np.linalg.norm(endpoint1 - center2) - r
+        if d > 0:
+            res.append([endpoint1, np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]), d])
+        else:
+            res.append([None, None, 0])
+
 
     phi = arctan((endpoint2[1] - center2[1]) , (endpoint2[0] - center2[0]))
     if (endpoint2[0] - center2[0]) == 0:
         phi = np.sign(endpoint2[1] - center2[1])*np.pi/2
     if is_between_angles(phi, angle(beta2 - alpha), angle(beta2 + alpha)):
-        res.append([endpoint2, np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]), np.linalg.norm(endpoint2 - np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]))])
+        d = np.linalg.norm(endpoint2 - center2) - r
+        if d > 0:
+            res.append([endpoint2, np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]), d])
+        else:
+            res.append([None, None, 0])
     #3: interiors
     phi = arctan((center2[1]-center1[1]),(center2[0]-center1[0]))
     if center2[0]-center1[0] == 0:
@@ -190,7 +207,11 @@ def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
     if is_between_angles(phi, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(angle(phi-sign(phi)*np.pi), angle(beta2-alpha), angle(beta2+alpha))\
         and (is_between_angles(phi3, angle(beta1-alpha), angle(beta1+alpha)) or is_between_angles(phi4, angle(beta1-alpha), angle(beta1+alpha)))\
         and (is_between_angles(phi1, angle(beta2-alpha), angle(beta2+alpha)) or is_between_angles(phi2, angle(beta2-alpha), angle(beta2+alpha))):
-        res.append([center1+r*np.array([np.cos(phi), np.sin(phi)]), center2+r*np.array([np.cos(phi-np.pi), np.sin(phi-np.pi)]), np.linalg.norm(center1+r*np.array([np.cos(phi), np.sin(phi)])-center2-r*np.array([np.cos(phi-np.pi), np.sin(phi-np.pi)]))])
+        d = np.linalg.norm(center1-center2)-2*r
+        if d > 0:
+            res.append([center1+r*np.array([np.cos(phi), np.sin(phi)]), center2+r*np.array([np.cos(phi-np.pi), np.sin(phi-np.pi)]), d])
+        else:
+            res.append([None, None, 0])
     #4: intersection
     dx, dy = center2[0] - center1[0], center2[1] - center1[1]
     d = np.sqrt(dx * dx + dy * dy)
@@ -260,11 +281,17 @@ def closestDistanceBetweenArcAndLine(a0, a1, center, beta, r, alpha):
     if a1[0] - center[0] == 0:
         phi1 = np.sign(a1[1] - center[1])*np.pi/2
     d = np.linalg.norm(a0 - center) - r
-    if d > 0 and is_between_angles(phi0, angle(beta -alpha), angle(beta + alpha)):
-        res.append([a0, center+r*np.array([np.cos(phi0), np.sin(phi0)]), d])
+    if is_between_angles(phi0, angle(beta -alpha), angle(beta + alpha)):
+        if d > 0:
+            res.append([a0, center+r*np.array([np.cos(phi0), np.sin(phi0)]), d])
+        else:
+            res.append([None, None, 0])
     d = np.linalg.norm(a1 - center) - r
-    if d > 0 and is_between_angles(phi1, angle(beta -alpha), angle(beta + alpha)):
-        res.append([a1, center+r*np.array([np.cos(phi1), np.sin(phi1)]), d])
+    if is_between_angles(phi1, angle(beta -alpha), angle(beta + alpha)):
+        if d > 0:
+            res.append([a1, center+r*np.array([np.cos(phi1), np.sin(phi1)]), d])
+        else:
+            res.append([None, None, 0])
     # intersection
     # A = 1+(a1[1]-a0[1])**2/(a1[0]-a0[0])**2
     # B = -2*center[0]-(2*a0[0]*(a1[1]-a0[1])**2+2*(a1[1]-a0[1])*(a0[1]-center[1])*(a1[0]-a0[0]))/(a1[0]-a0[0])**2
