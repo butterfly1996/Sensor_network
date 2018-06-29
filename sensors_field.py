@@ -2,15 +2,27 @@ from matplotlib import pyplot as plt
 import numpy as np
 from matplotlib.patches import Wedge
 import random
+from matplotlib import collections  as mc
 # import distance
 class Sensor():
     def __init__(self, xi, yi, betai, r, alpha):
         self.xi = xi
         self.yi = yi
+        while(betai>np.pi or betai<-np.pi):
+            if(betai>np.pi):
+                betai-=np.pi
+            if (betai < -np.pi):
+                betai += np.pi
+        while (alpha > np.pi or alpha < -np.pi):
+            if (alpha > np.pi):
+                alpha -= np.pi
+            if (alpha < -np.pi):
+                alpha += np.pi
         self.betai = betai
         self.alpha = alpha
         self.r = r
         self.alpha = alpha
+
         # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
 class Sensors_field():
     def __init__(self, lenght, height):
@@ -26,6 +38,7 @@ class Sensors_field():
         # self.xi+self.r if -self.alpha <= -self.betai and -self.betai <= self.alpha else 0)
         # self.xL = min(self.xi, self.xi+self.r*np.cos(self.betai-self.alpha), self.xi+self.r*np.cos(self.betai+self.alpha),
         # self.xi+self.r if -self.alpha <= -self.betai and -self.betai <= self.alpha else self.xi+9*self.r)
+        self.pointslist = []
         self.sensors_list = []
     def create_sensors_randomly(self, num_sensor = 100, r=3, alpha=60):
         for i in range(0, num_sensor):
@@ -34,15 +47,24 @@ class Sensors_field():
     def field_show(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
+        plt.subplot()
         for sens in self.sensors_list:
             fov = Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color="r", alpha=0.5)
             ax.add_artist(fov)
+        lines = []
+        # for cupple_point in self.pointslist:
+        #     lines.append(tuple(cupple_point[0], cupple_point[1]))
+        lc = mc.LineCollection(np.array(self.pointslist), linewidths=2)
+        ax.add_collection(lc)
         plt.xlim(xmax = self.L, xmin=0)
         plt.ylim(ymax = self.H, ymin = 0)
         plt.show()
         pass
     def add_sensor(self, sensor):
         self.sensors_list.append(sensor)
+    def add_dis_2_points(self, points):
+        self.pointslist.append(points)
+        print(self.pointslist)
 if __name__ == '__main__':
     # sensor_field = Sensors_field(lenght=30, height=10, num_station=12, num_mobile=20, alpha=60)
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3)
