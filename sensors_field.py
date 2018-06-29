@@ -3,21 +3,28 @@ import numpy as np
 from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
+
 # import distance
+def angle(value):
+    # chuan hoa gia tri goc tu -pi den pi
+    return (value+np.pi) % (2*np.pi) - np.pi
+
 class Sensor():
     def __init__(self, xi, yi, betai, r, alpha):
         self.xi = xi
         self.yi = yi
-        while(betai>np.pi or betai<-np.pi):
-            if(betai>np.pi):
-                betai-=np.pi
-            if (betai < -np.pi):
-                betai += np.pi
-        while (alpha > np.pi or alpha < -np.pi):
-            if (alpha > np.pi):
-                alpha -= np.pi
-            if (alpha < -np.pi):
-                alpha += np.pi
+        # while(betai>np.pi or betai<-np.pi):
+        #     if(betai>np.pi):
+        #         betai-=np.pi
+        #     if (betai < -np.pi):
+        #         betai += np.pi
+        # while (alpha > np.pi or alpha < -np.pi):
+        #     if (alpha > np.pi):
+        #         alpha -= np.pi
+        #     if (alpha < -np.pi):
+        #         alpha += np.pi
+        betai = angle(betai)
+        alpha = angle(alpha)
         self.betai = betai
         self.alpha = alpha
         self.r = r
@@ -52,10 +59,17 @@ class Sensors_field():
             fov = Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color="r", alpha=0.5)
             ax.add_artist(fov)
         lines = []
+        # show = True
         # for cupple_point in self.pointslist:
-        #     lines.append(tuple(cupple_point[0], cupple_point[1]))
-        lc = mc.LineCollection(np.array(self.pointslist), linewidths=2)
-        ax.add_collection(lc)
+        #      if cupple_point == None:
+        #          show = False
+        #          break
+        # if show == True:
+        try:
+            lc = mc.LineCollection(np.array(self.pointslist), linewidths=2)
+            ax.add_collection(lc)
+        except ValueError:
+            pass
         plt.xlim(xmax = self.L, xmin=0)
         plt.ylim(ymax = self.H, ymin = 0)
         plt.show()
@@ -65,14 +79,7 @@ class Sensors_field():
     def add_dis_2_points(self, points):
         self.pointslist.append(points)
         print(self.pointslist)
-if __name__ == '__main__':
-    # sensor_field = Sensors_field(lenght=30, height=10, num_station=12, num_mobile=20, alpha=60)
-    # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3)
-    sensor_field = Sensors_field(10, 10)
-    alpha = 70
-    sensor_field.add_sensor(sensor=Sensor(3, 3, 30, 2, alpha))
-    sensor_field.add_sensor(sensor=Sensor(8, 3, 30, 2, alpha))
-
+        
 class WBG(Sensors_field):
     def build_WBG(self):
         pass
@@ -86,11 +93,16 @@ class WBG(Sensors_field):
         pass
 
 if __name__ == '__main__':
+    import  distance
     sensor_field = Sensors_field(lenght=10, height=10)
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
-    sensor_field.add_sensor(Sensor(3, 3, 20, 2, 70))
-    sensor_field.add_sensor(Sensor(8, 3, 90, 2, 70))
-    # distance.minimum__sectors_distance(Sensor(3, 3, 20, 2, 70), Sensor(8, 3, 90, 2, 70))
+    s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
+    s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
+    sensor_field.add_sensor(s1)
+    sensor_field.add_sensor(s2)
+    res = distance.minimum__sectors_distance(s1, s2)
+    print ("Min: %f"%res[2])
+    sensor_field.add_dis_2_points([res[0], res[1]])
     sensor_field.field_show()
 
 
