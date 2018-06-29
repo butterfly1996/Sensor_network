@@ -43,13 +43,6 @@ class Sensors_field():
         pass
     def add_sensor(self, sensor):
         self.sensors_list.append(sensor)
-if __name__ == '__main__':
-    # sensor_field = Sensors_field(lenght=30, height=10, num_station=12, num_mobile=20, alpha=60)
-    # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3)
-    sensor_field = Sensors_field(10, 10)
-    alpha = 70
-    sensor_field.add_sensor(sensor=Sensor(3, 3, 30, 2, alpha))
-    sensor_field.add_sensor(sensor=Sensor(8, 3, 30, 2, alpha))
 
 class WBG(Sensors_field):
     def build_WBG(self):
@@ -64,11 +57,12 @@ class WBG(Sensors_field):
         pass
 
 if __name__ == '__main__':
+    import  distance
     sensor_field = Sensors_field(lenght=10, height=10)
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
-    sensor_field.add_sensor(Sensor(3, 3, 20, 2, 70))
-    sensor_field.add_sensor(Sensor(8, 3, 90, 2, 70))
-    # distance.minimum__sectors_distance(Sensor(3, 3, 20, 2, 70), Sensor(8, 3, 90, 2, 70))
+    sensor_field.add_sensor(Sensor(3, 3, np.pi/3, 2, np.pi/4))
+    sensor_field.add_sensor(Sensor(8, 3, np.pi/2, 2, np.pi/4))
+    print (distance.minimum__sectors_distance(Sensor(3, 3, np.pi/3, 2, np.pi/4), Sensor(8, 3, np.pi/2, 2, np.pi/4)))
     sensor_field.field_show()
 
 
