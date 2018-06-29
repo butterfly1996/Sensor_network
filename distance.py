@@ -1,5 +1,27 @@
 import numpy as np
 from sensors_field import Sensor
+def arctan(y, x):
+    if x >= 0:
+        return np.arctan(y/x)
+    elif y > 0:
+        return np.pi/2-np.arctan(y/x)
+    else:
+        return -np.pi/2-np.arctan(y/x)
+
+def angle(value):
+    # chuan hoa gia tri goc tu -pi den pi
+    return (value+np.pi) % (2*np.pi) - np.pi
+
+def is_between_angles(value, angle1, angle2):
+    angle_min = min(angle1, angle2)
+    angle_max = max(angle1, angle2)
+    if angle_max-angle_min < np.pi:
+        return angle_min <= value <= angle_max
+    elif value < 0:
+        return angle_max-2*np.pi <= value <= angle_min
+    else:
+        return angle_max-2*np.pi <= value-2*np.pi <= angle_min
+
 def closestDistanceBetweenLines(a0,a1,b0,b1,clampAll=True,clampA0=True,clampA1=True,clampB0=True,clampB1=True):
 
     ''' Given two lines defined by numpy.array pairs (a0,a1,b0,b1)
@@ -45,16 +67,16 @@ def closestDistanceBetweenLines(a0,a1,b0,b1,clampAll=True,clampA0=True,clampA1=T
             if d0 <= 0 >= d1:
                 if clampA0 and clampB1:
                     if np.absolute(d0) < np.absolute(d1):
-                        return [a0, b0, np.linalg.norm(a0-b0)]
-                    return [a0, b1, np.linalg.norm(a0-b1)]
+                        return [a0[:2], b0[:2], np.linalg.norm(a0-b0)]
+                    return [a0[:2], b1[:2], np.linalg.norm(a0-b1)]
 
 
             # Is segment B after A?
             elif d0 >= magA <= d1:
                 if clampA1 and clampB0:
                     if np.absolute(d0) < np.absolute(d1):
-                        return [a1, b0, np.linalg.norm(a1-b0)]
-                    return [a1, b1, np.linalg.norm(a1-b1)]
+                        return [a1[:2], b0[:2], np.linalg.norm(a1-b0)]
+                    return [a1[:2], b1[:2], np.linalg.norm(a1-b1)]
 
 
         # Segments overlap, return distance between parallel segments
@@ -105,7 +127,7 @@ def closestDistanceBetweenLines(a0,a1,b0,b1,clampAll=True,clampA0=True,clampA1=T
             pA = a0 + (_A * dot)
 
 
-    return [pA, pB, np.linalg.norm(pA-pB)]
+    return [pA[:2], pB[:2], np.linalg.norm(pA-pB)]
 
 def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
     res = []
@@ -121,66 +143,72 @@ def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
     res.append([endpoint2, endpoint3, np.linalg.norm(endpoint2-endpoint3)])
     res.append([endpoint2, endpoint4, np.linalg.norm(endpoint2-endpoint4)])
     #2: endpoint to interior
-    phi = np.arctan((endpoint3[1]-center1[1])/(endpoint3[0]-center1[0]))
+    phi = arctan((endpoint3[1]-center1[1]), (endpoint3[0]-center1[0]))
     if (endpoint3[0]-center1[0]) == 0:
         phi = np.sign(endpoint3[1]-center1[1])*np.pi/2
-    if phi <= beta1+alpha and phi >= beta1-alpha:
+    if is_between_angles(phi, angle(beta1-alpha), angle(beta1+alpha)):
         res.append([endpoint3, np.array([center1[0]+r*np.cos(phi), center1[1]+r*np.sin(phi)]), np.linalg.norm(endpoint3-np.array([center1[0]+r*np.cos(phi), center1[1]+r*np.sin(phi)]))])
 
-    phi = np.arctan((endpoint4[1] - center1[1]) / (endpoint4[0] - center1[0]))
+    phi = arctan((endpoint4[1] - center1[1]) , (endpoint4[0] - center1[0]))
     if (endpoint4[0]-center1[0]) == 0:
         phi = np.sign(endpoint4[1]-center1[1])*np.pi/2
-    if phi <= beta1 + alpha and phi >= beta1 - alpha:
+    if is_between_angles(phi, angle(beta1-alpha), angle(beta1+alpha)):
         res.append([endpoint4, np.array([center1[0] + r * np.cos(phi), center1[1] + r * np.sin(phi)]), np.linalg.norm(endpoint4 - np.array([center1[0] + r * np.cos(phi), center1[1] + r * np.sin(phi)]))])
 
-    phi = np.arctan((endpoint1[1] - center2[1]) / (endpoint1[0] - center2[0]))
+    phi = arctan((endpoint1[1] - center2[1]) , (endpoint1[0] - center2[0]))
     if (endpoint1[0] - center2[0]) == 0:
         phi = np.sign(endpoint1[1] - center2[1])*np.pi/2
-    if phi <= beta1 + alpha and phi >= beta1 - alpha:
-        res.append([endpoint1, np.array([center1[0] + r * np.cos(phi), center1[1] + r * np.sin(phi)]), np.linalg.norm(endpoint1 - np.array([center1[0] + r * np.cos(phi), center1[1] + r * np.sin(phi)]))])
+    if is_between_angles(phi, angle(beta2 - alpha), angle(beta2 + alpha)):
+        res.append([endpoint1, np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]), np.linalg.norm(endpoint1 - np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]))])
 
-    phi = np.arctan((endpoint2[1] - center2[1]) / (endpoint2[0] - center2[0]))
+    phi = arctan((endpoint2[1] - center2[1]) , (endpoint2[0] - center2[0]))
     if (endpoint2[0] - center2[0]) == 0:
         phi = np.sign(endpoint2[1] - center2[1])*np.pi/2
-    if phi <= beta1 + alpha and phi >= beta1 - alpha:
-        res.append([endpoint2, np.array([center1[0] + r * np.cos(phi), center1[1] + r * np.sin(phi)]), np.linalg.norm(endpoint2 - np.array([center1[0] + r * np.cos(phi), center1[1] + r * np.sin(phi)]))])
+    if is_between_angles(phi, angle(beta2 - alpha), angle(beta2 + alpha)):
+        res.append([endpoint2, np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]), np.linalg.norm(endpoint2 - np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]))])
     #3: interiors
-    phi = np.arctan((center2[1]-center1[1])/(center2[0]-center1[0]))
+    phi = arctan((center2[1]-center1[1]),(center2[0]-center1[0]))
     if center2[0]-center1[0] == 0:
         phi = np.sign(center2[1]-center1[1])*np.pi/2
-    phi3 = np.arctan((endpoint3[1] - center1[1]) / (endpoint3[0] - center1[0]))
+    phi3 = arctan((endpoint3[1] - center1[1]) , (endpoint3[0] - center1[0]))
     if endpoint3[0] - center1[0] == 0:
         phi3 = np.sign(endpoint3[1] - center1[1])*np.pi/2
-    phi4 = np.arctan((endpoint4[1] - center1[1]) / (endpoint4[0] - center1[0]))
+    phi4 = arctan((endpoint4[1] - center1[1]) , (endpoint4[0] - center1[0]))
     if endpoint4[0] - center1[0] == 0:
         phi4 = np.sign(endpoint4[1] - center1[1])*np.pi/2
-    phi1 = np.arctan((endpoint1[1] - center2[1]) / (endpoint1[0] - center2[0]))
+    phi1 = arctan((endpoint1[1] - center2[1]) , (endpoint1[0] - center2[0]))
     if endpoint1[0] - center2[0] == 0:
         phi1 = np.sign(endpoint1[1] - center2[1])*np.pi/2
-    phi2 = np.arctan((endpoint2[1] - center2[1]) / (endpoint2[0] - center2[0]))
+    phi2 = arctan((endpoint2[1] - center2[1]) , (endpoint2[0] - center2[0]))
     if endpoint2[0] - center2[0] == 0:
         phi2 = np.sign(endpoint2[1] - center2[1])*np.pi/2
-    if beta1-alpha <= phi <= beta1+alpha and beta2-alpha <= phi <= beta2+alpha\
-        and (beta1-alpha <= phi3 <= beta1+alpha or beta1-alpha <= phi4 <= beta1+alpha)\
-        and (beta2-alpha <= phi1 <= beta2+alpha or beta2-alpha <= phi2 <= beta2+alpha):
+    def sign(value):
+        if value >= 0:
+            return 1
+        else:
+            return -1
+    if is_between_angles(phi, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(angle(phi-sign(phi)*np.pi), angle(beta2-alpha), angle(beta2+alpha))\
+        and (is_between_angles(phi3, angle(beta1-alpha), angle(beta1+alpha)) or is_between_angles(phi4, angle(beta1-alpha), angle(beta1+alpha)))\
+        and (is_between_angles(phi1, angle(beta2-alpha), angle(beta2+alpha)) or is_between_angles(phi2, angle(beta2-alpha), angle(beta2+alpha))):
         res.append([center1+r*np.array([np.cos(phi), np.sin(phi)]), center2+r*np.array([np.cos(phi-np.pi), np.sin(phi-np.pi)]), np.linalg.norm(center1+r*np.array([np.cos(phi), np.sin(phi)])-center2-r*np.array([np.cos(phi-np.pi), np.sin(phi-np.pi)]))])
     #4: intersection
-        dx, dy = center2[0] - center1[0], center2[1] - center1[1]
-        d = np.sqrt(dx * dx + dy * dy)
-        if d < 2*r:
-            a = d / 2
-            h = np.sqrt(r**2 - a**2)
-            xm = center1[0] + a * dx / d
-            ym = center1[1] + a * dy / d
-            xs1 = xm + h * dy / d
-            xs2 = xm - h * dy / d
-            ys1 = ym - h * dx / d
-            ys2 = ym + h * dx / d
-            if beta1-alpha <= np.arctan((ys1-center1[1])/(xs1-center1[0])) <= beta1+alpha and beta2-alpha <= np.arctan((ys1-center2[1])/(xs1-center2[0])) <= beta2+alpha:
-                res.append([np.array([xs1, ys1]), np.array([xs1, ys1]), 0])
-            if beta1-alpha <= np.arctan((ys2-center1[1])/(xs2-center1[0])) <= beta1+alpha and beta2-alpha <= np.arctan((ys2-center2[1])/(xs2-center2[0])) <= beta2+alpha:
-                res.append([np.array([xs2, ys2]), np.array([xs2, ys2]), 0])
+    dx, dy = center2[0] - center1[0], center2[1] - center1[1]
+    d = np.sqrt(dx * dx + dy * dy)
+    if d < 2*r:
+        a = d / 2
+        h = np.sqrt(r**2 - a**2)
+        xm = center1[0] + a * dx / d
+        ym = center1[1] + a * dy / d
+        xs1 = xm + h * dy / d
+        xs2 = xm - h * dy / d
+        ys1 = ym - h * dx / d
+        ys2 = ym + h * dx / d
+        if is_between_angles(arctan((ys1-center1[1]),(xs1-center1[0])), angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(arctan((ys1-center2[1]),(xs1-center2[0])), angle(beta2-alpha), angle(beta2+alpha)):
+            res.append([np.array([xs1, ys1]), np.array([xs1, ys1]), 0])
+        if is_between_angles(arctan((ys2-center1[1]),(xs2-center1[0])), angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(arctan((ys2-center2[1]),(xs2-center2[0])), angle(beta2-alpha), angle(beta2+alpha)):
+            res.append([np.array([xs2, ys2]), np.array([xs2, ys2]), 0])
     res = np.array(res)
+    print (res[:, 2])
     return res[np.argmin(res[:, 2])]
 
 def closestDistanceBetweenArcAndLine(a0, a1, center, beta, r, alpha):
@@ -202,10 +230,10 @@ def closestDistanceBetweenArcAndLine(a0, a1, center, beta, r, alpha):
             (a0[1] - a1[1]) ** 2 + (a0[0] - a1[0]) ** 2)
     y = center[1] - (center[0] - x)*(a1[0] - a0[0]) / (a0[1] - a1[1])
     d = np.linalg.norm(np.array([x, y]) - center) - r
-    phi = np.arctan((y - center[1]) / (x - center[0]))
+    phi = arctan((y - center[1]) , (x - center[0]))
     if x - center[0] == 0:
         phi = np.sign(y - center[1])*np.pi/2
-    if a0[0]<= x <=a1[0] or a1[0] <= x <= a0[0] and a0[1]<= y <=a1[1] or a1[1] <= y <= a0[1] and beta -alpha <= phi <= beta + alpha:
+    if (a0[0]<= x <=a1[0] or a1[0] <= x <= a0[0]) and (a0[1]<= y <=a1[1] or a1[1] <= y <= a0[1]) and is_between_angles(phi, angle(beta -alpha), angle(beta + alpha)):
         if d > 0:
             res.append([center+r*np.array([np.cos(phi), np.sin(phi)]), np.array([x,y]), d])
         else:
@@ -215,28 +243,28 @@ def closestDistanceBetweenArcAndLine(a0, a1, center, beta, r, alpha):
     endpoint1[1] - a0[1])) / (
             (a0[1] - a1[1]) ** 2 + (a0[0] - a1[0]) ** 2)
     y = endpoint1[1] - (endpoint1[0] - x)*(a1[0] - a0[0]) / (a0[1] - a1[1])
-    if a0[0]<= x <=a1[0] or a1[0] <= x <= a0[0] and a0[1]<= y <=a1[1] or a1[1] <= y <= a0[1]:
+    if (a0[0]<= x <=a1[0] or a1[0] <= x <= a0[0]) and (a0[1]<= y <=a1[1] or a1[1] <= y <= a0[1]):
         res.append([endpoint1, np.array([x, y]), np.linalg.norm(np.array([x, y]) - endpoint1)])
 
     x = (a0[0] * (a0[1] - a1[1]) ** 2 + endpoint2[0] * (a1[0] - a0[0]) ** 2 + (a0[1] - a1[1]) * (a1[0] - a0[0]) * (
         endpoint2[1] - a0[1])) / (
             (a0[1] - a1[1]) ** 2 + (a0[0] - a1[0]) ** 2)
     y = endpoint2[1] - (endpoint2[0] - x)*(a1[0] - a0[0]) / (a0[1] - a1[1])
-    if a0[0] <= x <= a1[0] or a1[0] <= x <= a0[0] and a0[1] <= y <= a1[1] or a1[1] <= y <= a0[1]:
+    if (a0[0] <= x <= a1[0] or a1[0] <= x <= a0[0]) and (a0[1] <= y <= a1[1] or a1[1] <= y <= a0[1]):
         res.append([endpoint2, np.array([x, y]), np.linalg.norm(np.array([x, y]) - endpoint2)])
     # end of line to interior of arc
-    phi0 = np.arctan((a0[1] - center[1]) / (a0[0] - center[0]))
+    phi0 = arctan((a0[1] - center[1]) , (a0[0] - center[0]))
     if a0[0] - center[0] == 0:
         phi0 = np.sign(a0[1] - center[1])*np.pi/2
-    phi1 = np.arctan((a1[1] - center[1]) / (a1[0] - center[0]))
+    phi1 = arctan((a1[1] - center[1]) , (a1[0] - center[0]))
     if a1[0] - center[0] == 0:
         phi1 = np.sign(a1[1] - center[1])*np.pi/2
     d = np.linalg.norm(a0 - center) - r
-    if d > 0 and beta -alpha <= phi0 <= beta + alpha:
-        res.append([a0, center+r*np.array([np.cos(phi0), np.sin(phi)]), d])
+    if d > 0 and is_between_angles(phi0, angle(beta -alpha), angle(beta + alpha)):
+        res.append([a0, center+r*np.array([np.cos(phi0), np.sin(phi0)]), d])
     d = np.linalg.norm(a1 - center) - r
-    if d > 0 and beta -alpha <= phi1 <= beta + alpha:
-        res.append([a1, center+r*np.array([np.cos(phi1), np.sin(phi)]), d])
+    if d > 0 and is_between_angles(phi1, angle(beta -alpha), angle(beta + alpha)):
+        res.append([a1, center+r*np.array([np.cos(phi1), np.sin(phi1)]), d])
     # intersection
     # A = 1+(a1[1]-a0[1])**2/(a1[0]-a0[0])**2
     # B = -2*center[0]-(2*a0[0]*(a1[1]-a0[1])**2+2*(a1[1]-a0[1])*(a0[1]-center[1])*(a1[0]-a0[0]))/(a1[0]-a0[0])**2

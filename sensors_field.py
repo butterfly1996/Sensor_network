@@ -52,9 +52,13 @@ class Sensors_field():
             fov = Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color="r", alpha=0.5)
             ax.add_artist(fov)
         lines = []
-        # for cupple_point in self.pointslist:
-        #     lines.append(tuple(cupple_point[0], cupple_point[1]))
-        lc = mc.LineCollection(np.array(self.pointslist), linewidths=2)
+        show = True
+        for cupple_point in self.pointslist:
+             if cupple_point == None:
+                 show = False
+                 break
+        if show == True:
+            lc = mc.LineCollection(np.array(self.pointslist), linewidths=2)
         ax.add_collection(lc)
         plt.xlim(xmax = self.L, xmin=0)
         plt.ylim(ymax = self.H, ymin = 0)
@@ -82,9 +86,11 @@ if __name__ == '__main__':
     import  distance
     sensor_field = Sensors_field(lenght=10, height=10)
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
-    sensor_field.add_sensor(Sensor(3, 3, np.pi/3, 2, np.pi/4))
-    sensor_field.add_sensor(Sensor(8, 3, np.pi/2, 2, np.pi/4))
-    res = distance.minimum__sectors_distance(Sensor(3, 3, np.pi / 3, 2, np.pi / 4), Sensor(8, 3, np.pi / 2, 2, np.pi / 4))
+    s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
+    s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
+    sensor_field.add_sensor(s1)
+    sensor_field.add_sensor(s2)
+    res = distance.minimum__sectors_distance(s1, s2)
     print ("Min: %f"%res[2])
     sensor_field.add_dis_2_points([res[0], res[1]])
     sensor_field.field_show()
