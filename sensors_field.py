@@ -13,22 +13,13 @@ class Sensor():
     def __init__(self, xi, yi, betai, r, alpha):
         self.xi = xi
         self.yi = yi
-        # while(betai>np.pi or betai<-np.pi):
-        #     if(betai>np.pi):
-        #         betai-=np.pi
-        #     if (betai < -np.pi):
-        #         betai += np.pi
-        # while (alpha > np.pi or alpha < -np.pi):
-        #     if (alpha > np.pi):
-        #         alpha -= np.pi
-        #     if (alpha < -np.pi):
-        #         alpha += np.pi
         betai = angle(betai)
         alpha = angle(alpha)
         self.betai = betai
         self.alpha = alpha
         self.r = r
         self.alpha = alpha
+        self.lr = 2*r if self.alpha>np.pi/2 else np.max(r, 2*r*np.sin(self.alpha))
 
         # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
 class Sensors_field():
