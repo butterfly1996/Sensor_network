@@ -28,7 +28,7 @@ if __name__ == '__main__':
     sen12 = Sensor(xi=3, yi=3, alpha=70.0 / 180 * np.pi, betai=90.0 / 180 * np.pi, r=2)
     sen13 = Sensor(xi=3, yi=7, alpha=70.0 / 180 * np.pi, betai=-90.0 / 180 * np.pi, r=2)
     sen14 = Sensor(xi=2, yi=6, alpha=70.0 / 180 * np.pi, betai=120.0 / 180 * np.pi, r=2)
-    sen15 = Sensor(xi=2, yi=2, alpha=70.0 / 180 * np.pi, betai=225.0 / 180 * np.pi, r=2)
+    sen15 = Sensor(xi=2, yi=5, alpha=70.0 / 180 * np.pi, betai=225.0 / 180 * np.pi, r=2)
 
     case = [sen1, sen2]
     testcases.append(case)

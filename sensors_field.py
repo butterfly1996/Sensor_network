@@ -10,7 +10,9 @@ def angle(value):
     return (value+np.pi) % (2*np.pi) - np.pi
 
 class Sensor():
-    def __init__(self, xi, yi, betai, r, alpha):
+    def __init__(self, xi=None, yi=None, betai=None, r=None, alpha=None):
+        if xi == None or yi == None or betai == None or r == None or alpha == None:
+            return
         self.xi = xi
         self.yi = yi
         betai = angle(betai)
@@ -19,9 +21,29 @@ class Sensor():
         self.alpha = alpha
         self.r = r
         self.alpha = alpha
-        self.lr = 2*r if self.alpha>np.pi/2 else np.max(r, 2*r*np.sin(self.alpha))
+        self.lr = 2*r if self.alpha>np.pi/2 else max(r, 2*r*np.sin(self.alpha))
+
+        if -np.pi/2 <= angle(self.betai - self.alpha) <= np.pi/2 and -np.pi/2 <= angle(self.betai + self.alpha) <= np.pi/2:
+            self.xL = self.xi
+        elif angle(self.betai - self.alpha)*angle(self.betai + self.alpha) < 0 and np.abs(angle(self.betai - self.alpha)-angle(self.betai + self.alpha)) > np.pi:
+            self.xL = self.xi - self.r
+        else:
+            self.xL = min(self.xi + r*np.cos(angle(self.betai-self.alpha)), self.xi + r*np.cos(angle(self.betai+self.alpha)))
+
+        if (-np.pi <= angle(self.betai-self.alpha) <= -np.pi/2 or np.pi/2 <= angle(self.betai-self.alpha) <= np.pi)\
+                and (-np.pi <= angle(self.betai+self.alpha) <= -np.pi/2 or np.pi/2 <= angle(self.betai+self.alpha) <= np.pi):
+            self.xR = self.xi
+        elif angle(self.betai - self.alpha)*angle(self.betai + self.alpha) < 0 and np.abs(angle(self.betai - self.alpha)-angle(self.betai + self.alpha)) < np.pi:
+            self.xR = self.xi + self.r
+        else:
+            self.xR = max(self.xi + r * np.cos(angle(self.betai - self.alpha)),
+                          self.xi + r * np.cos(angle(self.betai + self.alpha)))
+
+        print(self.xL, self.xR)
 
         # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
+    def overlap(self, s2):
+        return True if distance.minimum__sectors_distance(self, s2) == 0 else False
 class Sensors_field():
     def __init__(self, lenght, height):
         self.L=lenght
@@ -72,28 +94,72 @@ class Sensors_field():
         print(self.pointslist)
         
 class WBG(Sensors_field):
+    def __init__(self, lenght, height, mode='weak'):
+        Sensors_field.__init__(self, lenght, height)
+
+        # sensor ung voi le trai va le phai va ko thuoc sensors_list
+        self.s = Sensor()
+        self.t = Sensor()
+        if mode not in ['weak', 'strong']:
+            raise ValueError
+        self.mode = mode
     def build_WBG(self):
-        pass
+        ## ma tran ke
+        ## index 0 la s
+        ## index n+1 la t
+        ## tu 1 den n la chi so cua cac sensor
+        self.adj_matrix = np.full((len(self.sensors_list) + 2, len(self.sensors_list) + 2), np.inf)
+        for i, si in enumerate([self.s] + self.sensors_list + [self.t]):
+            for j, sj in enumerate([self.s] + self.sensors_list + [self.t]):
+                if i < j:
+                    if i == 0 and j == len(self.sensors_list) + 1:
+                        continue
+                    self.adj_matrix[i][j] = self.w(si, sj)
+                elif i == j:
+                    self.adj_matrix[i][j] = 0
+                else:
+                    self.adj_matrix[i][j] = self.adj_matrix[j][i]
     def dw(self, vi, vj):# weak distance
-        if (vi.xL <= vj.xL and vj.xL <= vi.xR) or (vj.xL <= vi.xL and vi.xL <= vj.xR):
+        if vi == self.s:
+            return vj.xL
+        if vi == self.t:
+            return self.L - vj.xR
+        if vj == self.s:
+            return vi.xL
+        if vj == self.t:
+            return self.L - vi.xR
+        elif (vi.xL <= vj.xL and vj.xL <= vi.xR) or (vj.xL <= vi.xL and vi.xL <= vj.xR):
             return 0
-        #else
+        elif vj.xL-vi.xR > 0:
+            return vj.xL-vi.xR
+        else:
+            return vi.xL-vj.xR
     def ds(self, vi, vj):# strong distance
-        pass
+        if vi == self.s or vi == self.t or vj == self.s or vj == self.t:
+            return self.dw(vi, vj)
+        elif vi.overlap(vj):
+            return 0
+        else:
+            return distance.minimum__sectors_distance(vi, vj)
     def w(self, vi, vj):# weight
-        pass
+        try:
+            lr = vi.lr
+        except:
+            lr = vj.lr
+        if self.mode == 'weak':
+            return np.ceil(self.dw(vi, vj)/lr)
+        else:
+            return np.ceil(self.ds(vi, vj)/lr)
+    def show_matrix(self):
+        print(self.adj_matrix)
 
 if __name__ == '__main__':
     import  distance
-    sensor_field = Sensors_field(lenght=10, height=10)
+    wbg = WBG(lenght=10, height=10)
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
-    s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
-    s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
-    sensor_field.add_sensor(s1)
-    sensor_field.add_sensor(s2)
-    res = distance.minimum__sectors_distance(s1, s2)
-    print ("Min: %f"%res[2])
-    sensor_field.add_dis_2_points([res[0], res[1]])
-    sensor_field.field_show()
-
-
+    #s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
+    #s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
+    wbg.create_sensors_randomly(10)
+    wbg.build_WBG()
+    wbg.show_matrix()
+    wbg.field_show()
