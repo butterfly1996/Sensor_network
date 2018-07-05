@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
-
+import matplotlib.patches as patches
 # import distance
 def angle(value):
     # chuan hoa gia tri goc tu -pi den pi
@@ -43,7 +43,7 @@ class Sensor():
 
         # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
     def overlap(self, s2):
-        return True if distance.minimum__sectors_distance(self, s2) == 0 else False
+        return True if distance.minimum__sectors_distance(self, s2)[2] == 0 else False
 class Sensors_field():
     def __init__(self, lenght, height):
         self.L=lenght
@@ -68,9 +68,13 @@ class Sensors_field():
         fig = plt.figure()
         ax = fig.add_subplot(111)
         plt.subplot()
-        for sens in self.sensors_list:
-            fov = Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color="r", alpha=0.5)
-            ax.add_artist(fov)
+        for i in range(0, len(self.sensors_list)):
+            sens = self.sensors_list[i]
+        # for sens in self.sensors_list:
+        #     fov = Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color=np.array([random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)]), alpha=0.5, label=str(i))
+
+            # ax.add_artist(fov)
+            ax.add_patch(patches.Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color=np.array([random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)]), alpha=0.5, label=str(i+1)))
         lines = []
         # show = True
         # for cupple_point in self.pointslist:
@@ -85,6 +89,7 @@ class Sensors_field():
             pass
         plt.xlim(xmax = self.L, xmin=0)
         plt.ylim(ymax = self.H, ymin = 0)
+        plt.legend()  # <--- here
         plt.show()
         pass
     def add_sensor(self, sensor):
@@ -140,22 +145,49 @@ class WBG(Sensors_field):
         elif vi.overlap(vj):
             return 0
         else:
-            return distance.minimum__sectors_distance(vi, vj)
+            return distance.minimum__sectors_distance(vi, vj)[2]
     def w(self, vi, vj):# weight
         try:
             lr = vi.lr
         except:
             lr = vj.lr
         if self.mode == 'weak':
+
             return np.ceil(self.dw(vi, vj)/lr)
         else:
+            # print("***")
+            # print(self.ds(vi, vj)/lr)
             return np.ceil(self.ds(vi, vj)/lr)
     def show_matrix(self):
         print(self.adj_matrix)
+    def dijkstra(self):
+        dist = []
+        prev = []
+        Q = []
+        if len(self.adj_matrix)==0:
+            return None
+        for i, si in enumerate([self.s] + self.sensors_list + [self.t]):
+            dist[i] = np.inf
+            prev[i] = None
+            Q.append(i)
+        dist[0] = 0
+        while len(Q) is not 0:
+            u = Q[np.argmin([dist[q] for q in Q])]
+            Q.remove(u)
+            for i in enumerate([self.s] + self.sensors_list + [self.t]):
+                if i == u:
+                    continue
+                if (u == 0 and i == len(self.sensors_list)+1) or (u == len(self.sensors_list)+1 and i == 0):
+                    continue
+                alt = dist[u]+self.adj_matrix[u][i]
+                if alt < dist[i]:
+                    dist[i] = alt
+                    prev[i] = u
+        return dist, prev
 
 if __name__ == '__main__':
     import  distance
-    wbg = WBG(lenght=10, height=10)
+    wbg = WBG(lenght=10, height=10, mode='strong')
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
     #s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
     #s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
