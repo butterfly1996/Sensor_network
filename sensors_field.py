@@ -39,7 +39,7 @@ class Sensor():
             self.xR = max(self.xi + r * np.cos(angle(self.betai - self.alpha)),
                           self.xi + r * np.cos(angle(self.betai + self.alpha)))
 
-        print(self.xL, self.xR)
+        # print(self.xL, self.xR)
 
         # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
     def overlap(self, s2):
@@ -96,7 +96,7 @@ class Sensors_field():
         self.sensors_list.append(sensor)
     def add_dis_2_points(self, points):
         self.pointslist.append(points)
-        print(self.pointslist)
+        # print(self.pointslist)
         
 class WBG(Sensors_field):
     def __init__(self, lenght, height, mode='weak'):
@@ -161,24 +161,25 @@ class WBG(Sensors_field):
     def show_matrix(self):
         print(self.adj_matrix)
     def dijkstra(self):
-        dist = []
-        prev = []
+        dist = [np.inf]*(len(self.sensors_list)+2)
+        prev = [None]*(len(self.sensors_list)+2)
         Q = []
         if len(self.adj_matrix)==0:
             return None
         for i, si in enumerate([self.s] + self.sensors_list + [self.t]):
-            dist[i] = np.inf
-            prev[i] = None
+            # dist[i] = np.inf
+            # prev[i] = None
             Q.append(i)
         dist[0] = 0
         while len(Q) is not 0:
             u = Q[np.argmin([dist[q] for q in Q])]
             Q.remove(u)
-            for i in enumerate([self.s] + self.sensors_list + [self.t]):
+            for i, _ in enumerate([self.s] + self.sensors_list + [self.t]):
                 if i == u:
                     continue
                 if (u == 0 and i == len(self.sensors_list)+1) or (u == len(self.sensors_list)+1 and i == 0):
                     continue
+                # print("debug:: ", u, ":::", i)
                 alt = dist[u]+self.adj_matrix[u][i]
                 if alt < dist[i]:
                     dist[i] = alt
@@ -188,7 +189,7 @@ class WBG(Sensors_field):
         while prev[j] != None:
             p.append(prev[j])
             j = prev[j]
-        p = reversed(p)
+        p = list(reversed(p))
         return p
     def min_num_mobile_greedy(self, k):
         Pk = []
@@ -215,6 +216,7 @@ class WBG(Sensors_field):
             Nm = 0
             for p in Pk:
                 Nm += len(p)
+        return Pk, Nm
 if __name__ == '__main__':
     import  distance
     wbg = WBG(lenght=10, height=10, mode='strong')
@@ -224,4 +226,8 @@ if __name__ == '__main__':
     wbg.create_sensors_randomly(10)
     wbg.build_WBG()
     wbg.show_matrix()
+    Pk, Nm = wbg.min_num_mobile_greedy(2)
+    print("######################################################")
+    print(Pk)
+    print(Nm)
     wbg.field_show()
