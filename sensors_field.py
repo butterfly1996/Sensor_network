@@ -183,8 +183,38 @@ class WBG(Sensors_field):
                 if alt < dist[i]:
                     dist[i] = alt
                     prev[i] = u
-        return dist, prev
-
+        p = []
+        j = len(self.sensors_list)+1
+        while prev[j] != None:
+            p.append(prev[j])
+            j = prev[j]
+        p = reversed(p)
+        return p
+    def min_num_mobile_greedy(self, k):
+        Pk = []
+        q=0
+        while True:
+            p = self.dijkstra()
+            if len(p)==0:
+                break
+            if len(p)<=np.ceil(self.L/self.sensors_list[0].lr):
+                Pk.append(p)
+                q+=1
+                for i in range(len(p)-1):
+                    self.adj_matrix[p[i], p[i+1]] = np.inf
+            else:
+                break
+            if(q>=k):
+                break
+        Nm = 0
+        for p in Pk:
+            Nm += len(p)
+        if q < k:
+            for i in range(k-q):
+                Pk.append([0, len(self.sensors_list)+1])
+            Nm = 0
+            for p in Pk:
+                Nm += len(p)
 if __name__ == '__main__':
     import  distance
     wbg = WBG(lenght=10, height=10, mode='strong')
