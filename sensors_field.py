@@ -4,6 +4,7 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
+
 # import distance
 def angle(value):
     # chuan hoa gia tri goc tu -pi den pi
@@ -82,11 +83,9 @@ class Sensors_field():
         #          show = False
         #          break
         # if show == True:
-        try:
-            lc = mc.LineCollection(np.array(self.pointslist), linewidths=2)
+        for cupple_point in self.pointslist:
+            lc = mc.LineCollection(np.array([cupple_point]), linewidths=2)
             ax.add_collection(lc)
-        except ValueError:
-            pass
         plt.xlim(xmax = self.L, xmin=0)
         plt.ylim(ymax = self.H, ymin = 0)
         plt.legend()  # <--- here
@@ -124,6 +123,7 @@ class WBG(Sensors_field):
                     self.adj_matrix[i][j] = 0
                 else:
                     self.adj_matrix[i][j] = self.adj_matrix[j][i]
+        self.o_adj_matrix = self.adj_matrix.copy()
     def dw(self, vi, vj):# weak distance
         if vi == self.s:
             return vj.xL
@@ -184,38 +184,45 @@ class WBG(Sensors_field):
                 if alt < dist[i]:
                     dist[i] = alt
                     prev[i] = u
-        p = []
+
         j = len(self.sensors_list)+1
+        p = [j]
         while prev[j] != None:
             p.append(prev[j])
             j = prev[j]
         p = list(reversed(p))
         return p
+    def length(self, p):
+        res = 0
+        for i in range(len(p) - 1):
+            res += self.o_adj_matrix[p[i]][p[i + 1]]
+        return res
     def min_num_mobile_greedy(self, k):
         Pk = []
         q=0
         while True:
             p = self.dijkstra()
-            if len(p)==0:
+            if self.length(p)==0:
                 break
-            if len(p)<=np.ceil(self.L/self.sensors_list[0].lr):
+            if self.length(p)<=np.ceil(self.L/self.sensors_list[0].lr):
                 Pk.append(p)
                 q+=1
-                for i in range(len(p)-1):
-                    self.adj_matrix[p[i], p[i+1]] = np.inf
+                for i in range(1, len(p)-1):
+                    self.adj_matrix[p[i], :] = np.inf
+                    self.adj_matrix[:, p[i]] = np.inf
             else:
                 break
             if(q>=k):
                 break
         Nm = 0
         for p in Pk:
-            Nm += len(p)
+            Nm += self.length(p)
         if q < k:
             for i in range(k-q):
                 Pk.append([0, len(self.sensors_list)+1])
             Nm = 0
             for p in Pk:
-                Nm += len(p)
+                Nm += self.length(p)
         return Pk, Nm
 if __name__ == '__main__':
     import  distance
@@ -223,11 +230,17 @@ if __name__ == '__main__':
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
     #s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
     #s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
-    wbg.create_sensors_randomly(10)
+    wbg.create_sensors_randomly(15)
     wbg.build_WBG()
     wbg.show_matrix()
-    Pk, Nm = wbg.min_num_mobile_greedy(2)
+    Pk, Nm = wbg.min_num_mobile_greedy(3)
     print("######################################################")
     print(Pk)
     print(Nm)
+    ## debug
+    for path in Pk:
+        if len(path) > 2:
+            for i in range(1, len(path)-2):
+                res = distance.minimum__sectors_distance(wbg.sensors_list[path[i]-1], wbg.sensors_list[path[i+1]-1])
+                wbg.add_dis_2_points([res[0], res[1]])
     wbg.field_show()
