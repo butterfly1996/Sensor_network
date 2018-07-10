@@ -4,7 +4,7 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
-random.seed(19)
+random.seed(149)
 
 # import distance
 def angle(value):
@@ -234,6 +234,29 @@ class WBG(Sensors_field):
             for p in Pk:
                 Nm += self.length(p)
         return Pk, Nm
+    def max_num_barrier_greedy(self, tau): ## tau: number of deployed mobile sensors
+        q = 0
+        Pq = []
+        while True:
+            p = self.dijkstra()
+            if len(p) < 2: ## empty path
+                return q+np.floor((tau-np.sum([self.length(pq) for pq in Pq]))/np.ceil(self.L/self.sensors_list[0].lr)), Pq
+            else:
+                if self.length(p) <= np.ceil(self.L/self.sensors_list[0].lr):
+                    if np.sum([self.length(pq) for pq in Pq]) + self.length(p) <= tau:
+                        q += 1
+                        Pq.append(p)
+                        for i in range(1, len(p) - 1):
+                            self.adj_matrix[p[i], :] = np.inf
+                            self.adj_matrix[:, p[i]] = np.inf
+                    else:
+                        if np.sum([self.length(pq) for pq in Pq]) + self.length(p) == tau:
+                            return q+1, Pq
+                        else:
+                            return q, Pq
+                else:
+                    return q + np.floor((tau - np.sum([self.length(pq) for pq in Pq])) / np.ceil(self.L / self.sensors_list[0].lr)), Pq
+
 if __name__ == '__main__':
     import  distance
     wbg = WBG(lenght=10, height=10, mode='strong')
@@ -243,10 +266,22 @@ if __name__ == '__main__':
     wbg.create_sensors_randomly(20)
     wbg.build_WBG()
     wbg.show_matrix()
-    Pk, Nm = wbg.min_num_mobile_greedy(3)
+
+    # Pk, Nm = wbg.min_num_mobile_greedy(3)
+    # print("######################################################")
+    # print(Pk)
+    # print(Nm)
+    # ## debug
+    # for path in Pk:
+    #     if len(path) > 2:
+    #         for i in range(1, len(path)-2):
+    #             res = distance.minimum__sectors_distance(wbg.sensors_list[path[i]-1], wbg.sensors_list[path[i+1]-1])
+    #             wbg.add_dis_2_points([res[0], res[1]])
+
     print("######################################################")
+    Nb, Pk = wbg.max_num_barrier_greedy(8)
+    print(Nb)
     print(Pk)
-    print(Nm)
     ## debug
     for path in Pk:
         if len(path) > 2:
