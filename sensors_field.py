@@ -213,7 +213,8 @@ class WBG(Sensors_field):
         q=0
         while q<k:
             p = self.dijkstra()
-            if self.length(p)==1: ## empty path
+            if len(p)<2: ## empty path
+                print('%')
                 break
             if self.length(p)<=np.ceil(self.L/self.sensors_list[0].lr):
                 Pk.append(p)
