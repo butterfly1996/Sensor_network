@@ -4,6 +4,7 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
+random.seed(19)
 
 # import distance
 def angle(value):
@@ -75,7 +76,11 @@ class Sensors_field():
         #     fov = Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color=np.array([random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)]), alpha=0.5, label=str(i))
 
             # ax.add_artist(fov)
-            ax.add_patch(patches.Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color=np.array([random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)]), alpha=0.5, label=str(i+1)))
+            patch = patches.Wedge((sens.xi, sens.yi), sens.r, (sens.betai - sens.alpha) / np.pi * 180,
+                          (sens.betai + sens.alpha) / np.pi * 180,
+                          color=np.array([random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)]), alpha=0.5,
+                          label=str(i + 1))
+            ax.add_patch(patch)
         lines = []
         # show = True
         # for cupple_point in self.pointslist:
@@ -84,8 +89,11 @@ class Sensors_field():
         #          break
         # if show == True:
         for cupple_point in self.pointslist:
-            lc = mc.LineCollection(np.array([cupple_point]), linewidths=2)
-            ax.add_collection(lc)
+            try:
+                lc = mc.LineCollection(np.array([cupple_point]), linewidths=2)
+                ax.add_collection(lc)
+            except ValueError:
+                pass
         plt.xlim(xmax = self.L, xmin=0)
         plt.ylim(ymax = self.H, ymin = 0)
         plt.legend()  # <--- here
@@ -194,15 +202,18 @@ class WBG(Sensors_field):
         return p
     def length(self, p):
         res = 0
+        if len(p) == 2 and p[0] == 0 and p[1] == len(self.sensors_list)+1: # direct barrier
+            lr = self.sensors_list[0].lr
+            return np.ceil(self.L/lr)
         for i in range(len(p) - 1):
             res += self.o_adj_matrix[p[i]][p[i + 1]]
         return res
     def min_num_mobile_greedy(self, k):
         Pk = []
         q=0
-        while True:
+        while q<k:
             p = self.dijkstra()
-            if self.length(p)==0:
+            if self.length(p)==1: ## empty path
                 break
             if self.length(p)<=np.ceil(self.L/self.sensors_list[0].lr):
                 Pk.append(p)
@@ -211,8 +222,6 @@ class WBG(Sensors_field):
                     self.adj_matrix[p[i], :] = np.inf
                     self.adj_matrix[:, p[i]] = np.inf
             else:
-                break
-            if(q>=k):
                 break
         Nm = 0
         for p in Pk:
@@ -230,7 +239,7 @@ if __name__ == '__main__':
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
     #s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
     #s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
-    wbg.create_sensors_randomly(15)
+    wbg.create_sensors_randomly(20)
     wbg.build_WBG()
     wbg.show_matrix()
     Pk, Nm = wbg.min_num_mobile_greedy(3)
