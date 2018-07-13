@@ -5,6 +5,7 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
+import codecs
 random.seed(149)
 
 # import distance
@@ -63,6 +64,7 @@ class Sensors_field():
         # self.xi+self.r if -self.alpha <= -self.betai and -self.betai <= self.alpha else self.xi+9*self.r)
         self.pointslist = []
         self.sensors_list = []
+        self.mobile_sensors_list = []
     def create_sensors_randomly(self, num_sensor = 100, r=3, alpha=60):
         for i in range(0, num_sensor):
             sensor = Sensor(xi=random.uniform(0, self.L), yi = random.uniform(0, self.H), betai= random.uniform(0, 360), r=r, alpha=alpha)
@@ -105,7 +107,22 @@ class Sensors_field():
     def add_dis_2_points(self, points):
         self.pointslist.append(points)
         # print(self.pointslist)
-        
+    def creat_sensors_to_text(self, filename):
+        file = codecs.open(filename, mode="w", encoding="utf-8")
+        for sensor in self.sensors_list:
+            file.write("S"+"\t"+str(sensor.xi)+"\t"+str(sensor.yi)+"\t"+str(sensor.betai)+"\t"+str(sensor.r)+"\t"+str(sensor.alpha)+"\n")
+        for sensor in self.mobile_sensors_list:
+            file.write("M"+"\t"+str(sensor.xi)+"\t"+str(sensor.yi)+"\t"+str(sensor.betai)+"\t"+str(sensor.r)+"\t"+str(sensor.alpha)+"\n")
+    def load_sensors_from_txt(self, filename):
+        file = codecs.open(filename, mode="r", encoding="utf-8")
+        for line in file.readlines():
+            try:
+                field_array = line.split("\t")
+                if field_array[0] == "S":
+                    s = Sensor(xi=float(field_array[1]), yi=float(field_array[2]), betai=float(field_array[3]), alpha=float(field_array[5]), r = float(field_array[4]))
+                    self.sensors_list.append(s)
+            except:
+                print("error")
 class WBG(Sensors_field):
     def __init__(self, lenght, height, mode='weak'):
         Sensors_field.__init__(self, lenght, height)
