@@ -1,3 +1,4 @@
+from scipy.optimize import linear_sum_assignment
 from matplotlib import pyplot as plt
 import numpy as np
 from matplotlib.patches import Wedge
@@ -256,6 +257,49 @@ class WBG(Sensors_field):
                             return q, Pq
                 else:
                     return q + np.floor((tau - np.sum([self.length(pq) for pq in Pq])) / np.ceil(self.L / self.sensors_list[0].lr)), Pq
+    def calculate_target_location(self, s1, s2):
+        pa, pb, d = distance.minimum__sectors_distance(self.sensors_list[s1], self.sensors_list[s2])
+        if d > 0:
+            dv = d/self.o_adj_matrix[s1, s2]
+            phi = distance.arctan(pb[1]-pa[1], pb[0]-pa[0])
+            alpha = self.sensors_list[0].alpha
+            lr = self.sensors_list[0].lr
+            r = self.sensors_list[0].r
+
+            res = []
+            if lr == r and 2*alpha<np.pi:
+                for i in range(self.o_adj_matrix):
+                    res.append(np.array([pa[0]+i*dv*np.cos(phi), pa[1]+i*dv*np.sin(phi), phi]))
+            elif lr == 2*r*np.sin(alpha) and 2*alpha<np.pi:
+                h = np.sqrt(r**2-(lr/2)**2)
+                l = np.sqrt(h**2+(dv/2)**2)
+                lamda = distance.arctan(2*h, dv)
+                for i in range(self.o_adj_matrix):
+                    res.append(np.array([pa[0]+i*dv*np.cos(phi)+l*np.cos(phi+lamda), pa[1]+i*dv*np.sin(phi)+l*np.sin(phi+lamda), angle(phi+3/2*np.pi)]))
+            elif lr == 2*r and 2*alpha>np.pi:
+                for i in range(self.o_adj_matrix):
+                    res.append(np.array([pa[0]+i*dv*np.cos(phi), pa[1]+i*dv*np.sin(phi), angle(phi+np.pi/2)]))
+            return res
+        else:
+            return []
+
+    def mcbf(self, k, dynamic_sens): # k la so barierr, dynamic_sens list cac sensor dong duoc trien khai
+        tau = len(dynamic_sens)
+        Pk, Nm = self.min_num_mobile_greedy(k)
+        locs = []
+        for path in Pk:
+            for i in range(len(path)-1):
+                locs.extend(self.calculate_target_location(path[i], path[i+1]))
+        d = np.zeros((tau, Nm))
+        for i, dynamic_sen in enumerate(dynamic_sens):
+            for j, loc in enumerate(locs):
+                d[i,j] = np.sqrt((dynamic_sen.xi-loc[0])**2+(dynamic_sen.yi-loc[1])**2)
+        row_ind, col_ind = linear_sum_assignment(d)
+        return d[row_ind, col_ind].sum() # chi phi minimum
+
+
+
+
 
 if __name__ == '__main__':
     import  distance
