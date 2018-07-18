@@ -27,23 +27,42 @@ class Sensor():
         self.alpha = alpha
         self.lr = 2*r if self.alpha>np.pi/2 else max(r, 2*r*np.sin(self.alpha))
 
+        # leftmost point
         if -np.pi/2 <= angle(self.betai - self.alpha) <= np.pi/2 and -np.pi/2 <= angle(self.betai + self.alpha) <= np.pi/2:
             self.xL = self.xi
+            self.yL = self.yi
         elif angle(self.betai - self.alpha)*angle(self.betai + self.alpha) < 0 and np.abs(angle(self.betai - self.alpha)-angle(self.betai + self.alpha)) > np.pi:
             self.xL = self.xi - self.r
+            self.yL = self.yi
         else:
             self.xL = min(self.xi + r*np.cos(angle(self.betai-self.alpha)), self.xi + r*np.cos(angle(self.betai+self.alpha)))
+            argmin = np.argmin([self.xi + r*np.cos(angle(self.betai-self.alpha)), self.xi + r*np.cos(angle(self.betai+self.alpha))])
+            if argmin == 0:
+                self.yL = self.yi + r*np.sin(angle(self.betai-self.alpha))
+            else:
+                self.yL = self.yi + r * np.sin(angle(self.betai+self.alpha))
 
+        # rightmost point
         if (-np.pi <= angle(self.betai-self.alpha) <= -np.pi/2 or np.pi/2 <= angle(self.betai-self.alpha) <= np.pi)\
                 and (-np.pi <= angle(self.betai+self.alpha) <= -np.pi/2 or np.pi/2 <= angle(self.betai+self.alpha) <= np.pi):
             self.xR = self.xi
+            self.yR = self.yi + r * np.sin(angle(self.betai - self.alpha))
         elif angle(self.betai - self.alpha)*angle(self.betai + self.alpha) < 0 and np.abs(angle(self.betai - self.alpha)-angle(self.betai + self.alpha)) < np.pi:
             self.xR = self.xi + self.r
+            self.yR = self.yi + r * np.sin(angle(self.betai - self.alpha))
         else:
             self.xR = max(self.xi + r * np.cos(angle(self.betai - self.alpha)),
                           self.xi + r * np.cos(angle(self.betai + self.alpha)))
+            argmax = np.argmax([self.xi + r * np.cos(angle(self.betai - self.alpha)),
+                                self.xi + r * np.cos(angle(self.betai + self.alpha))])
+            if argmax == 0:
+                self.yR = self.yi + r * np.sin(angle(self.betai - self.alpha))
+            else:
+                self.yR = self.yi + r * np.sin(angle(self.betai + self.alpha))
 
-        # print(self.xL, self.xR)
+
+
+                # print(self.xL, self.xR)
 
         # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
     def overlap(self, s2):
@@ -63,6 +82,8 @@ class Sensors_field():
         # self.xL = min(self.xi, self.xi+self.r*np.cos(self.betai-self.alpha), self.xi+self.r*np.cos(self.betai+self.alpha),
         # self.xi+self.r if -self.alpha <= -self.betai and -self.betai <= self.alpha else self.xi+9*self.r)
         self.pointslist = []
+        self.targets = []
+        self.dynamics = []
         self.sensors_list = []
         self.mobile_sensors_list = []
     def create_sensors_randomly(self, num_sensor = 100, r=3, alpha=60):
@@ -99,6 +120,15 @@ class Sensors_field():
                 pass
         plt.xlim(xmax = self.L, xmin=0)
         plt.ylim(ymax = self.H, ymin = 0)
+
+        x = [p[0] for p in self.dynamics]
+        y = [p[1] for p in self.dynamics]
+        plt.scatter(x, y, color='red')
+
+        x = [p[0] for p in self.targets]
+        y = [p[1] for p in self.targets]
+        plt.scatter(x, y, color='green')
+
         plt.legend()  # <--- here
         plt.show()
         pass
@@ -107,6 +137,10 @@ class Sensors_field():
     def add_dis_2_points(self, points):
         self.pointslist.append(points)
         # print(self.pointslist)
+    def add_target(self, point):
+        self.targets.append(point)
+    def add_dynamic(self, point):
+        self.dynamics.append(point)
     def creat_sensors_to_text(self, filename):
         file = codecs.open(filename, mode="w", encoding="utf-8")
         for sensor in self.sensors_list:
@@ -224,7 +258,7 @@ class WBG(Sensors_field):
             lr = self.sensors_list[0].lr
             return np.ceil(self.L/lr)
         for i in range(len(p) - 1):
-            res += self.o_adj_matrix[p[i]][p[i + 1]]
+            res += int(self.o_adj_matrix[p[i]][p[i + 1]])
         return res
     def min_num_mobile_greedy(self, k):
         Pk = []
@@ -275,8 +309,21 @@ class WBG(Sensors_field):
                 else:
                     return q + np.floor((tau - np.sum([self.length(pq) for pq in Pq])) / np.ceil(self.L / self.sensors_list[0].lr)), Pq
     def calculate_target_location(self, s1, s2):
-        pa, pb, d = distance.minimum__sectors_distance(self.sensors_list[s1], self.sensors_list[s2])
-        if d > 0:
+        if s1 not in [0, len(self.sensors_list)+1] and s2 not in [0, len(self.sensors_list)+1]:
+            pa, pb, d = distance.minimum__sectors_distance(self.sensors_list[s1-1], self.sensors_list[s2-1])
+        elif s1 == 0:
+            xL, yL = self.sensors_list[s2 - 1].xL, self.sensors_list[s2 - 1].yL
+            pa, pb, d = np.array([0, yL]), np.array([xL, yL]), xL
+        elif s2 == 0:
+            xL, yL = self.sensors_list[s1 - 1].xL, self.sensors_list[s1 - 1].yL
+            pa, pb, d = np.array([0, yL]), np.array([xL, yL]), xL
+        elif s1 == len(self.sensors_list)+1:
+            xR, yR = self.sensors_list[s2 - 1].xR, self.sensors_list[s2 - 1].yR
+            pa, pb, d = np.array([self.L, yR]), np.array([xR, yR]), self.L-xR
+        elif s2 == len(self.sensors_list)+1:
+            xR, yR = self.sensors_list[s1 - 1].xR, self.sensors_list[s1 - 1].yR
+            pa, pb, d = np.array([self.L, yR]), np.array([xR, yR]), self.L-xR
+        if self.o_adj_matrix[s1, s2] > 0:
             dv = d/self.o_adj_matrix[s1, s2]
             phi = distance.arctan(pb[1]-pa[1], pb[0]-pa[0])
             alpha = self.sensors_list[0].alpha
@@ -285,16 +332,16 @@ class WBG(Sensors_field):
 
             res = []
             if lr == r and 2*alpha<np.pi:
-                for i in range(self.o_adj_matrix):
+                for i in range(int(self.o_adj_matrix[s1, s2])):
                     res.append(np.array([pa[0]+i*dv*np.cos(phi), pa[1]+i*dv*np.sin(phi), phi]))
             elif lr == 2*r*np.sin(alpha) and 2*alpha<np.pi:
                 h = np.sqrt(r**2-(lr/2)**2)
                 l = np.sqrt(h**2+(dv/2)**2)
                 lamda = distance.arctan(2*h, dv)
-                for i in range(self.o_adj_matrix):
+                for i in range(int(self.o_adj_matrix[s1, s2])):
                     res.append(np.array([pa[0]+i*dv*np.cos(phi)+l*np.cos(phi+lamda), pa[1]+i*dv*np.sin(phi)+l*np.sin(phi+lamda), angle(phi+3/2*np.pi)]))
             elif lr == 2*r and 2*alpha>np.pi:
-                for i in range(self.o_adj_matrix):
+                for i in range(int(self.o_adj_matrix[s1, s2])):
                     res.append(np.array([pa[0]+i*dv*np.cos(phi), pa[1]+i*dv*np.sin(phi), angle(phi+np.pi/2)]))
             return res
         else:
@@ -303,16 +350,22 @@ class WBG(Sensors_field):
     def mcbf(self, k, dynamic_sens): # k la so barierr, dynamic_sens list cac sensor dong duoc trien khai
         tau = len(dynamic_sens)
         Pk, Nm = self.min_num_mobile_greedy(k)
+        print ("Nm %d"%Nm)
         locs = []
         for path in Pk:
+            print(path)
             for i in range(len(path)-1):
                 locs.extend(self.calculate_target_location(path[i], path[i+1]))
+        if tau < len(locs):
+            return (None, None), np.inf
         d = np.zeros((tau, Nm))
         for i, dynamic_sen in enumerate(dynamic_sens):
             for j, loc in enumerate(locs):
                 d[i,j] = np.sqrt((dynamic_sen.xi-loc[0])**2+(dynamic_sen.yi-loc[1])**2)
         row_ind, col_ind = linear_sum_assignment(d)
-        return d[row_ind, col_ind].sum() # chi phi minimum
+        min_cost = d[row_ind, col_ind].sum()
+        return locs, (row_ind, col_ind), min_cost
+        # locs la vi tri cac target, (row_ind, col_ind) la ghep cap giua dynamic sensor den target, min_cost chi phi minimum
 
 
 
@@ -339,14 +392,29 @@ if __name__ == '__main__':
     #             res = distance.minimum__sectors_distance(wbg.sensors_list[path[i]-1], wbg.sensors_list[path[i+1]-1])
     #             wbg.add_dis_2_points([res[0], res[1]])
 
+    # print("######################################################")
+    # Nb, Pk = wbg.max_num_barrier_greedy(8)
+    # print(Nb)
+    # print(Pk)
+    # ## debug
+    # for path in Pk:
+    #     if len(path) > 2:
+    #         for i in range(1, len(path)-2):
+    #             res = distance.minimum__sectors_distance(wbg.sensors_list[path[i]-1], wbg.sensors_list[path[i+1]-1])
+    #             wbg.add_dis_2_points([res[0], res[1]])
+    # wbg.field_show()
+
     print("######################################################")
-    Nb, Pk = wbg.max_num_barrier_greedy(8)
-    print(Nb)
-    print(Pk)
-    ## debug
-    for path in Pk:
-        if len(path) > 2:
-            for i in range(1, len(path)-2):
-                res = distance.minimum__sectors_distance(wbg.sensors_list[path[i]-1], wbg.sensors_list[path[i+1]-1])
-                wbg.add_dis_2_points([res[0], res[1]])
+    dynamic_sens = [Sensor(xi=random.uniform(0, wbg.L), yi = random.uniform(0, wbg.H), betai= random.uniform(0, 360), r=3, alpha=60) for _ in range(10)]
+    for dynamic_sen in dynamic_sens:
+        wbg.add_dynamic(np.array([dynamic_sen.xi, dynamic_sen.yi]))
+        ## hien thi cham do tren do thi
+        ## moi cham ung voi vi tri sensor dong ban dau
+
+    res = wbg.mcbf(3, dynamic_sens)
+    print (res[2])
+    for loc in res[0]:
+        wbg.add_target(loc[:2])
+        ## hien thi cham xanh tren do thi
+        ## moi cham ung voi vi tri muc tieu can dat sensor dong
     wbg.field_show()
