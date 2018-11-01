@@ -5,6 +5,7 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
+from pso import *
 import codecs
 random.seed(149)
 
@@ -367,6 +368,8 @@ class WBG(Sensors_field):
         return locs, (row_ind, col_ind), min_cost
         # locs la vi tri cac target, (row_ind, col_ind) la ghep cap giua dynamic sensor den target, min_cost chi phi minimum
 
+    def add_population(self, num_particles, num_barriers):
+        self.population = Population(self, num_particles, num_barriers)
 
 
 
@@ -381,10 +384,7 @@ if __name__ == '__main__':
     wbg.build_WBG()
     wbg.show_matrix()
 
-    # Pk, Nm = wbg.min_num_mobile_greedy(3)
-    # print("######################################################")
-    # print(Pk)
-    # print(Nm)
+
     # ## debug
     # for path in Pk:
     #     if len(path) > 2:
@@ -404,7 +404,9 @@ if __name__ == '__main__':
     #             wbg.add_dis_2_points([res[0], res[1]])
     # wbg.field_show()
 
+
     print("######################################################")
+    '''
     dynamic_sens = [Sensor(xi=random.uniform(0, wbg.L), yi = random.uniform(0, wbg.H), betai= random.uniform(0, 360), r=3, alpha=60) for _ in range(10)]
     for dynamic_sen in dynamic_sens:
         wbg.add_dynamic(np.array([dynamic_sen.xi, dynamic_sen.yi]))
@@ -417,4 +419,21 @@ if __name__ == '__main__':
         wbg.add_target(loc[:2])
         ## hien thi cham xanh tren do thi
         ## moi cham ung voi vi tri muc tieu can dat sensor dong
+    '''
+    wbg.field_show()
+    wbg.add_population(50, 3)
+    #wbg.population.initialize()
+    #wbg.population.show()
+    #wbg.population.cross_over()
+    #wbg.population.clone(5)
+    #wbg.population.show()
+    #wbg.population.particles[0].fitness(verbose=True)
+    wbg.population.evolve()
+
+    Pk, Nm = wbg.min_num_mobile_greedy(3)
+    print("######################################################")
+    print(Pk)
+    print(Nm)
+    print("######################################################")
+
     wbg.field_show()
