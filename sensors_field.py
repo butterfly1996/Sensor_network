@@ -5,8 +5,11 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
+from pso import *
 import codecs
-random.seed(149)
+import logging
+
+logging.basicConfig(filename='tunning.log',level=logging.INFO)
 
 # import distance
 def angle(value):
@@ -21,11 +24,12 @@ class Sensor():
         self.yi = yi
         betai = angle(betai)
         alpha = angle(alpha)
+        if alpha < 0:
+            alpha = -alpha
         self.betai = betai
         self.alpha = alpha
         self.r = r
-        self.alpha = alpha
-        self.lr = 2*r if self.alpha>np.pi/2 else max(r, 2*r*np.sin(self.alpha))
+        self.lr = 2*r if self.alpha>=np.pi/2 else max(r, 2*r*np.sin(self.alpha))
 
         # leftmost point
         if -np.pi/2 <= angle(self.betai - self.alpha) <= np.pi/2 and -np.pi/2 <= angle(self.betai + self.alpha) <= np.pi/2:
@@ -367,24 +371,23 @@ class WBG(Sensors_field):
         return locs, (row_ind, col_ind), min_cost
         # locs la vi tri cac target, (row_ind, col_ind) la ghep cap giua dynamic sensor den target, min_cost chi phi minimum
 
+    def add_population(self, num_particles, num_barriers, omega, c1, c2):
+        self.population = Population(self, num_particles, num_barriers, omega, c1, c2)
 
 
 
 
 if __name__ == '__main__':
     import  distance
-    wbg = WBG(lenght=10, height=10, mode='strong')
+    wbg = WBG(lenght=100, height=20, mode='strong')
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
     #s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
     #s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
-    wbg.create_sensors_randomly(20)
+    wbg.create_sensors_randomly(50, r=2, alpha=np.pi)
     wbg.build_WBG()
     wbg.show_matrix()
 
-    # Pk, Nm = wbg.min_num_mobile_greedy(3)
-    # print("######################################################")
-    # print(Pk)
-    # print(Nm)
+
     # ## debug
     # for path in Pk:
     #     if len(path) > 2:
@@ -404,7 +407,9 @@ if __name__ == '__main__':
     #             wbg.add_dis_2_points([res[0], res[1]])
     # wbg.field_show()
 
+
     print("######################################################")
+    '''
     dynamic_sens = [Sensor(xi=random.uniform(0, wbg.L), yi = random.uniform(0, wbg.H), betai= random.uniform(0, 360), r=3, alpha=60) for _ in range(10)]
     for dynamic_sen in dynamic_sens:
         wbg.add_dynamic(np.array([dynamic_sen.xi, dynamic_sen.yi]))
@@ -417,4 +422,44 @@ if __name__ == '__main__':
         wbg.add_target(loc[:2])
         ## hien thi cham xanh tren do thi
         ## moi cham ung voi vi tri muc tieu can dat sensor dong
+    '''
+    Pk, Nm = wbg.min_num_mobile_greedy(3)
+    print("######################################################")
+    print(Pk)
+    print(Nm)
+    logging.info('greedy %d'%Nm)
+    '''
+    for i in range(len(wbg.sensors_list)):
+        for j in range(i+1, len(wbg.sensors_list)):
+            res = distance.minimum__sectors_distance(wbg.sensors_list[i], wbg.sensors_list[j])
+            wbg.add_dis_2_points([res[0], res[1]])'''
+    print("######################################################")
+
+    wbg.field_show()
+    
+    for OMEGA in [0.5, 0.8, 0.9]:
+        for C1 in [0.1, 0.5, 1.0, 1.5, 2.0]:
+            for C2 in [0.1, 0.5, 1.0, 1.5, 2.0]:
+                print ('CASE: %f, %f, %f'%(OMEGA, C1, C2))
+                min_fit = np.inf
+                fits = []
+                for i in range(30):
+                    wbg.add_population(50, 3, OMEGA, C1, C2)  
+    #wbg.population.initialize()
+    #wbg.population.show()
+    #wbg.population.cross_over()
+    #wbg.population.clone(5)
+    #wbg.population.show()
+    #wbg.population.particles[0].fitness(verbose=True)
+                    fit = wbg.population.evolve(500)
+                    fits.append(fit)
+                    if fit < min_fit:
+                        min_fit = fit
+                logging.info('CASE: %f, %f, %f'%(OMEGA, C1, C2))
+                mean_fit = np.mean(fits)
+                logging.info('min_fit %d, mean_fit %d'%(min_fit, mean_fit))
+                logging.info('#########')
+
+
+
     wbg.field_show()
