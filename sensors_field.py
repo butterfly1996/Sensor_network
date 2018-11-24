@@ -8,6 +8,7 @@ import matplotlib.patches as patches
 from pso import *
 import codecs
 import logging
+from pyswarm import pso
 
 logging.basicConfig(filename='tunning.log',level=logging.INFO)
 
@@ -256,13 +257,14 @@ class WBG(Sensors_field):
             j = prev[j]
         p = list(reversed(p))
         return p
-    def length(self, p):
+    def length(self, p, pso=False):
         res = 0
-        if len(p) == 2 and p[0] == 0 and p[1] == len(self.sensors_list)+1: # direct barrier
-            lr = self.sensors_list[0].lr
-            return np.ceil(self.L/lr)
+        if not pso:
+            if len(p) == 2 and p[0] == 0 and p[1] == len(self.sensors_list)+1: # direct barrier
+                lr = self.sensors_list[0].lr
+                return np.ceil(self.L/lr)
         for i in range(len(p) - 1):
-            res += int(self.o_adj_matrix[p[i]][p[i + 1]])
+            res += self.o_adj_matrix[p[i]][p[i + 1]]
         return res
     def min_num_mobile_greedy(self, k):
         Pk = []
@@ -437,9 +439,9 @@ if __name__ == '__main__':
 
     wbg.field_show()
     
-    for OMEGA in [0.5, 0.8, 0.9]:
-        for C1 in [0.1, 0.5, 1.0, 1.5, 2.0]:
-            for C2 in [0.1, 0.5, 1.0, 1.5, 2.0]:
+    for OMEGA in [0.5,1.0]:
+        for C1 in [2.0,0.5,1.0,1.5,0.1]:
+            for C2 in [0.1,0.5,1.0,1.5,2.0]:
                 print ('CASE: %f, %f, %f'%(OMEGA, C1, C2))
                 min_fit = np.inf
                 fits = []
@@ -455,6 +457,42 @@ if __name__ == '__main__':
                     fits.append(fit)
                     if fit < min_fit:
                         min_fit = fit
+                    
+                    ###START
+                    # N = 200
+                    # K = 3
+                    # def banana(chrome):
+                    #     mask = np.ones_like(chrome).astype(float) # mask values, 1 if vertex can be selected, else -np.inf
+                    #     mask[0] = -np.inf # s 
+                    #     paths = []
+                    #     result = 0
+                    #     for k in range(K):
+                    #         path = [0]
+                    #         next_v = np.argmax([ch if m == 1 else m for m, ch in zip(mask, chrome)])
+                    #         if mask[next_v]==-np.inf: # invalid
+                    #             path.append(N+1) # direct barrier
+                    #             paths.append(path)
+                    #             continue
+                    #         while next_v <= N:
+                    #             mask[next_v] = -np.inf
+                    #             path.append(next_v)
+                    #             next_v = np.argmax([ch if m == 1 else m for m, ch in zip(mask, chrome)]) # if negative? => BUG
+                    #         mask[next_v] = -np.inf
+                    #         path.append(N+1)
+                    #         paths.append(path)
+                    #     #print (paths)
+                    #     result = np.sum([wbg.length(path) for path in paths])
+                    #     return result
+
+                    # lb = [1]*(1+N+K)
+                    # ub = [100]*(1+N+K)
+
+                    # xopt, fopt = pso(banana, lb, ub)
+                    # print ('pyswarm')
+                    # print (xopt)
+                    # print (fopt)
+                    ###END
+
                 logging.info('CASE: %f, %f, %f'%(OMEGA, C1, C2))
                 mean_fit = np.mean(fits)
                 logging.info('min_fit %d, mean_fit %d'%(min_fit, mean_fit))
