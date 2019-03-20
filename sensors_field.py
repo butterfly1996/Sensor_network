@@ -5,14 +5,50 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
-from pso import *
+from pso_ga import *
 import codecs
-random.seed(149)
+import logging
+from math import atan2
+#from pyswarm import pso
+
+logging.basicConfig(filename='tunning.log',level=logging.INFO)
+#geom = Geometry()
 
 # import distance
 def angle(value):
     # chuan hoa gia tri goc tu -pi den pi
     return (value+np.pi) % (2*np.pi) - np.pi
+
+def is_between_angles(value, bisector, angle1, angle2):
+    angle_min = min(angle1, angle2)
+    angle_max = max(angle1, angle2)
+    if angle_max-angle_min < np.pi:
+        if np.isclose(bisector, (angle_max+angle_min)/2):
+            return angle_min <= value <= angle_max
+        else:
+            return not angle_min <= value <= angle_max
+    elif value < 0:
+        if bisector < 0:
+            if np.isclose(bisector, (angle_max-2*np.pi+angle_min)/2):
+                return angle_max-2*np.pi <= value <= angle_min
+            else:
+                return not angle_max-2*np.pi <= value <= angle_min
+        else:
+            if np.isclose(bisector-2*np.pi, (angle_max-2*np.pi+angle_min)/2):
+                return angle_max-2*np.pi <= value <= angle_min
+            else:
+                return not angle_max-2*np.pi <= value <= angle_min
+    else:
+        if bisector < 0:
+            if np.isclose(bisector, (angle_max-2*np.pi+angle_min)/2):
+                return angle_max-2*np.pi <= value-2*np.pi <= angle_min
+            else:
+                return not angle_max-2*np.pi <= value-2*np.pi <= angle_min
+        else:
+            if np.isclose(bisector-2*np.pi, (angle_max-2*np.pi+angle_min)/2):
+                return angle_max-2*np.pi <= value-2*np.pi <= angle_min
+            else:
+                return not angle_max-2*np.pi <= value-2*np.pi <= angle_min
 
 class Sensor():
     def __init__(self, xi=None, yi=None, betai=None, r=None, alpha=None):
@@ -22,11 +58,12 @@ class Sensor():
         self.yi = yi
         betai = angle(betai)
         alpha = angle(alpha)
+        if alpha < 0:
+            alpha = -alpha
         self.betai = betai
         self.alpha = alpha
         self.r = r
-        self.alpha = alpha
-        self.lr = 2*r if self.alpha>np.pi/2 else max(r, 2*r*np.sin(self.alpha))
+        self.lr = 2*r if self.alpha>=np.pi/2 else max(r, 2*r*np.sin(self.alpha))
 
         # leftmost point
         if -np.pi/2 <= angle(self.betai - self.alpha) <= np.pi/2 and -np.pi/2 <= angle(self.betai + self.alpha) <= np.pi/2:
@@ -68,6 +105,57 @@ class Sensor():
         # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
     def overlap(self, s2):
         return True if distance.minimum__sectors_distance(self, s2)[2] == 0 else False
+    # def _get_circle_intersect(self, s2):
+    #     intersections = geom.circle_intersection((self.xi, self.yi, self.r), (s2.xi, s2.yi, s2.r))
+    #     return intersections
+    # def _get_circle_tangency(self, p):
+    #     tangency = geom.circle_tangency((self.xi, self.yi, self.r), p)
+    #     return tangency
+    # def _get_boundary_intersect(self, x):
+    #     pass
+    # def get_virtual_nodes(self, s2):
+    #     self.virtual_nodes = []
+    #     d = np.linalg.norm(np.array([self.xi, self.yi])-np.array([s2.xi, s2.yi]))
+    #     r = self.r
+    #     if np.sqrt(2)*r <= d <= 2*r:
+    #         intersections = self._get_circle_intersect(s2)
+            
+    #         for intersection in intersections:
+    #             phi = atan2(intersection[1]-self.yi, intersection[0]-self.xi)
+    #             self.virtual_nodes.append(angle(phi-self.alpha))
+    #             self.virtual_nodes.append(angle(phi+self.alpha))
+    #     elif r <= d <= np.sqrt(2)*r:
+    #         intersections = self._get_circle_intersect(s2)
+    #         tangencies = s2._get_circle_tangency((self.xi,self.yi))
+
+    #         for intersection in intersections:
+    #             phi = atan2(intersection[1]-self.yi, intersection[0]-self.xi)
+    #             self.virtual_nodes.append(angle(phi-self.alpha))
+    #             self.virtual_nodes.append(angle(phi+self.alpha))
+
+    #         phi0 = atan2(tangency[0][1]-self.yi, tangency[0][0]-self.xi)
+    #         phi1 = atan2(tangency[1][1]-self.yi, tangency[1][0]-self.xi)
+    #         s0s2 = atan2(s2.yi-self.yi, s2.xi-self.xi)
+    #         if is_between_angles(phi0-self.alpha, s0s2, phi0, phi1):
+    #             self.virtual_nodes.append(angle(phi0+self.alpha))
+    #         else:
+    #             self.virtual_nodes.append(angle(phi0-self.alpha))
+    #         if is_between_angles(phi1-self.alpha, s0s2, phi0, phi1):
+    #             self.virtual_nodes.append(angle(phi1+self.alpha))
+    #         else:
+    #             self.virtual_nodes.append(angle(phi1-self.alpha))
+    #     elif d <= r:
+    #         intersections = self._get_circle_intersect(s2)
+
+    #         for intersection in intersections:
+    #             phi = atan2(intersection[1]-self.yi, intersection[0]-self.xi)
+    #             self.virtual_nodes.append(angle(phi-self.alpha))
+    #             self.virtual_nodes.append(angle(phi+self.alpha))
+            
+    #         phi = atan2(s2.yi-self.yi, s2.xi-self.xi)
+    #         self.virtual_nodes.append(angle(phi-self.alpha))
+    #         self.virtual_nodes.append(angle(phi+self.alpha))
+
 class Sensors_field():
     def __init__(self, lenght, height):
         self.L=lenght
@@ -95,6 +183,8 @@ class Sensors_field():
         fig = plt.figure()
         ax = fig.add_subplot(111)
         plt.subplot()
+        plt.gca().set_aspect('equal', adjustable='box')
+
         for i in range(0, len(self.sensors_list)):
             sens = self.sensors_list[i]
         # for sens in self.sensors_list:
@@ -253,13 +343,14 @@ class WBG(Sensors_field):
             j = prev[j]
         p = list(reversed(p))
         return p
-    def length(self, p):
+    def length(self, p, pso=False):
         res = 0
-        if len(p) == 2 and p[0] == 0 and p[1] == len(self.sensors_list)+1: # direct barrier
-            lr = self.sensors_list[0].lr
-            return np.ceil(self.L/lr)
+        if not pso:
+            if len(p) == 2 and p[0] == 0 and p[1] == len(self.sensors_list)+1: # direct barrier
+                lr = self.sensors_list[0].lr
+                return np.ceil(self.L/lr)
         for i in range(len(p) - 1):
-            res += int(self.o_adj_matrix[p[i]][p[i + 1]])
+            res += self.o_adj_matrix[p[i]][p[i + 1]]
         return res
     def min_num_mobile_greedy(self, k):
         Pk = []
@@ -368,7 +459,7 @@ class WBG(Sensors_field):
         return locs, (row_ind, col_ind), min_cost
         # locs la vi tri cac target, (row_ind, col_ind) la ghep cap giua dynamic sensor den target, min_cost chi phi minimum
 
-    def add_population(self, num_particles, num_barriers):
+    def add_population(self, num_particles, num_barriers, omega, c1, c2):
         self.population = Population(self, num_particles, num_barriers)
 
 
@@ -376,34 +467,13 @@ class WBG(Sensors_field):
 
 if __name__ == '__main__':
     import  distance
-    wbg = WBG(lenght=10, height=10, mode='strong')
+    wbg = WBG(lenght=100, height=20, mode='strong')
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
     #s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
     #s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
-    wbg.create_sensors_randomly(20)
+    wbg.create_sensors_randomly(num_sensor=50, r=2, alpha=np.pi-0.00001)
     wbg.build_WBG()
     wbg.show_matrix()
-
-
-    # ## debug
-    # for path in Pk:
-    #     if len(path) > 2:
-    #         for i in range(1, len(path)-2):
-    #             res = distance.minimum__sectors_distance(wbg.sensors_list[path[i]-1], wbg.sensors_list[path[i+1]-1])
-    #             wbg.add_dis_2_points([res[0], res[1]])
-
-    # print("######################################################")
-    # Nb, Pk = wbg.max_num_barrier_greedy(8)
-    # print(Nb)
-    # print(Pk)
-    # ## debug
-    # for path in Pk:
-    #     if len(path) > 2:
-    #         for i in range(1, len(path)-2):
-    #             res = distance.minimum__sectors_distance(wbg.sensors_list[path[i]-1], wbg.sensors_list[path[i+1]-1])
-    #             wbg.add_dis_2_points([res[0], res[1]])
-    # wbg.field_show()
-
 
     print("######################################################")
     '''
@@ -421,7 +491,7 @@ if __name__ == '__main__':
         ## moi cham ung voi vi tri muc tieu can dat sensor dong
     '''
     wbg.field_show()
-    wbg.add_population(50, 3)
+    wbg.add_population(50, 3, 0.5, 2, 1)
     #wbg.population.initialize()
     #wbg.population.show()
     #wbg.population.cross_over()
