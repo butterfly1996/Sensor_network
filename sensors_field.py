@@ -5,17 +5,53 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
-from pso import *
+from pso_ga import *
 import codecs
 import logging
-from pyswarm import pso
+from circle_util import Geometry
+from math import atan2
+#from pyswarm import pso
 
 logging.basicConfig(filename='tunning.log',level=logging.INFO)
+geom = Geometry()
+
+np.random.seed(23)
 
 # import distance
 def angle(value):
     # chuan hoa gia tri goc tu -pi den pi
     return (value+np.pi) % (2*np.pi) - np.pi
+
+def is_between_angles(value, bisector, angle1, angle2):
+    angle_min = min(angle1, angle2)
+    angle_max = max(angle1, angle2)
+    if angle_max-angle_min < np.pi:
+        if np.isclose(bisector, (angle_max+angle_min)/2):
+            return angle_min <= value <= angle_max
+        else:
+            return not angle_min <= value <= angle_max
+    elif value < 0:
+        if bisector < 0:
+            if np.isclose(bisector, (angle_max-2*np.pi+angle_min)/2):
+                return angle_max-2*np.pi <= value <= angle_min
+            else:
+                return not angle_max-2*np.pi <= value <= angle_min
+        else:
+            if np.isclose(bisector-2*np.pi, (angle_max-2*np.pi+angle_min)/2):
+                return angle_max-2*np.pi <= value <= angle_min
+            else:
+                return not angle_max-2*np.pi <= value <= angle_min
+    else:
+        if bisector < 0:
+            if np.isclose(bisector, (angle_max-2*np.pi+angle_min)/2):
+                return angle_max-2*np.pi <= value-2*np.pi <= angle_min
+            else:
+                return not angle_max-2*np.pi <= value-2*np.pi <= angle_min
+        else:
+            if np.isclose(bisector-2*np.pi, (angle_max-2*np.pi+angle_min)/2):
+                return angle_max-2*np.pi <= value-2*np.pi <= angle_min
+            else:
+                return not angle_max-2*np.pi <= value-2*np.pi <= angle_min
 
 class Sensor():
     def __init__(self, xi=None, yi=None, betai=None, r=None, alpha=None):
@@ -64,14 +100,68 @@ class Sensor():
                 self.yR = self.yi + r * np.sin(angle(self.betai - self.alpha))
             else:
                 self.yR = self.yi + r * np.sin(angle(self.betai + self.alpha))
+        
 
-
-
+        self.virtual_nodes = []
                 # print(self.xL, self.xR)
 
         # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
     def overlap(self, s2):
         return True if distance.minimum__sectors_distance(self, s2)[2] == 0 else False
+    def _get_circle_intersect(self, s2):
+        intersections = geom.circle_intersection((self.xi, self.yi, self.r), (s2.xi, s2.yi, s2.r))
+        return intersections
+    def _get_circle_tangency(self, p):
+        tangency = geom.circle_tangency((self.xi, self.yi, self.r), p)
+        return tangency
+    def _get_boundary_intersect(self, x):
+        pass
+    def set_virtual_nodes(self, s2):
+        d = np.linalg.norm(np.array([self.xi, self.yi])-np.array([s2.xi, s2.yi]))
+        r = self.r
+        if np.sqrt(2)*r <= d <= 2*r:
+            intersections = self._get_circle_intersect(s2)
+            
+            for intersection in intersections:
+                phi = atan2(intersection[1]-self.yi, intersection[0]-self.xi)
+                self.virtual_nodes.append(angle(phi-self.alpha))
+                self.virtual_nodes.append(angle(phi+self.alpha))
+        elif r <= d <= np.sqrt(2)*r:
+            intersections = self._get_circle_intersect(s2)
+            tangencies = s2._get_circle_tangency((self.xi,self.yi))
+
+            for intersection in intersections:
+                phi = atan2(intersection[1]-self.yi, intersection[0]-self.xi)
+                self.virtual_nodes.append(angle(phi-self.alpha))
+                self.virtual_nodes.append(angle(phi+self.alpha))
+
+            phi0 = atan2(tangencies[0][1]-self.yi, tangencies[0][0]-self.xi)
+            phi1 = atan2(tangencies[1][1]-self.yi, tangencies[1][0]-self.xi)
+            s0s2 = atan2(s2.yi-self.yi, s2.xi-self.xi)
+            if is_between_angles(phi0-self.alpha, s0s2, phi0, phi1):
+                self.virtual_nodes.append(angle(phi0+self.alpha))
+            else:
+                self.virtual_nodes.append(angle(phi0-self.alpha))
+            if is_between_angles(phi1-self.alpha, s0s2, phi0, phi1):
+                self.virtual_nodes.append(angle(phi1+self.alpha))
+            else:
+                self.virtual_nodes.append(angle(phi1-self.alpha))
+            s2.virtual_nodes.append(angle(atan2(tangencies[0][1]-s2.yi, tangencies[0][0]-s2.xi)-s2.alpha))
+            s2.virtual_nodes.append(angle(atan2(tangencies[0][1]-s2.yi, tangencies[0][0]-s2.xi)+s2.alpha))
+            s2.virtual_nodes.append(angle(atan2(tangencies[1][1]-s2.yi, tangencies[1][0]-s2.xi)-s2.alpha))
+            s2.virtual_nodes.append(angle(atan2(tangencies[1][1]-s2.yi, tangencies[1][0]-s2.xi)+s2.alpha))
+        elif d <= r:
+            intersections = self._get_circle_intersect(s2)
+
+            for intersection in intersections:
+                phi = atan2(intersection[1]-self.yi, intersection[0]-self.xi)
+                self.virtual_nodes.append(angle(phi-self.alpha))
+                self.virtual_nodes.append(angle(phi+self.alpha))
+            
+            phi = atan2(s2.yi-self.yi, s2.xi-self.xi)
+            self.virtual_nodes.append(angle(phi-self.alpha))
+            self.virtual_nodes.append(angle(phi+self.alpha))
+
 class Sensors_field():
     def __init__(self, lenght, height):
         self.L=lenght
@@ -95,21 +185,27 @@ class Sensors_field():
         for i in range(0, num_sensor):
             sensor = Sensor(xi=random.uniform(0, self.L), yi = random.uniform(0, self.H), betai= random.uniform(0, 360), r=r, alpha=alpha)
             self.sensors_list.append(sensor)
-    def field_show(self):
+    def field_show(self, virtual_node=False):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         plt.subplot()
+        plt.gca().set_aspect('equal', adjustable='box')
+
         for i in range(0, len(self.sensors_list)):
             sens = self.sensors_list[i]
-        # for sens in self.sensors_list:
-        #     fov = Wedge((sens.xi, sens.yi), sens.r, (sens.betai-sens.alpha)/np.pi*180, (sens.betai+sens.alpha)/np.pi*180, color=np.array([random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)]), alpha=0.5, label=str(i))
-
-            # ax.add_artist(fov)
+            color = np.array([random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)])
             patch = patches.Wedge((sens.xi, sens.yi), sens.r, (sens.betai - sens.alpha) / np.pi * 180,
                           (sens.betai + sens.alpha) / np.pi * 180,
-                          color=np.array([random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)]), alpha=0.5,
+                          color=color, alpha=0.6,
                           label=str(i + 1))
             ax.add_patch(patch)
+            if virtual_node: # for debug:
+                for j in range(len(sens.virtual_nodes)):
+                    patch = patches.Wedge((sens.xi, sens.yi), sens.r, (sens.virtual_nodes[j] - sens.alpha) / np.pi * 180,
+                            (sens.virtual_nodes[j] + sens.alpha) / np.pi * 180,
+                            color=color, alpha=0.3,
+                            label=str(i + 1))
+                    ax.add_patch(patch)
         lines = []
         # show = True
         # for cupple_point in self.pointslist:
@@ -167,8 +263,8 @@ class WBG(Sensors_field):
         Sensors_field.__init__(self, lenght, height)
 
         # sensor ung voi le trai va le phai va ko thuoc sensors_list
-        self.s = Sensor()
-        self.t = Sensor()
+        self.s = Sensor(xi=0)
+        self.t = Sensor(xi=lenght)
         if mode not in ['weak', 'strong']:
             raise ValueError
         self.mode = mode
@@ -377,127 +473,64 @@ class WBG(Sensors_field):
         self.population = Population(self, num_particles, num_barriers, omega, c1, c2)
 
 
+class DBG(WBG):
+    def __init__(self, lenght, height):
+        WBG.__init__(self, lenght, height, mode='strong')
+        self.H = height
+        self.L = lenght
+    def build_virtual_nodes(self):
+        for i in range(len(self.sensors_list)):
+            for j in range(i+1, len(self.sensors_list)):
+                u = self.sensors_list[i]
+                v = self.sensors_list[j]
+                u.set_virtual_nodes(v)
+                v.set_virtual_nodes(u)
+        # for s and t
+        for i in range(len(self.sensors_list)):
+            u = self.sensors_list[i]
+            if u.xi <= u.r:
+                u.virtual_nodes.append(angle(+np.arccos(-u.xi/u.r)-u.alpha))
+                u.virtual_nodes.append(angle(-np.arccos(-u.xi/u.r)+u.alpha))
+                u.virtual_nodes.append(angle(+np.arccos(-u.xi/u.r)+u.alpha))
+                u.virtual_nodes.append(angle(-np.arccos(-u.xi/u.r)-u.alpha))
+        for i in range(len(self.sensors_list)):
+            u = self.sensors_list[i]
+            if u.xi >= self.L-u.r:
+                u.virtual_nodes.append(angle(+np.arccos((self.L-u.xi)/u.r)-u.alpha))
+                u.virtual_nodes.append(angle(-np.arccos((self.L-u.xi)/u.r)+u.alpha))
+                u.virtual_nodes.append(angle(+np.arccos((self.L-u.xi)/u.r)+u.alpha))
+                u.virtual_nodes.append(angle(-np.arccos((self.L-u.xi)/u.r)-u.alpha))
+    def build_dbg(self):
+        def rotated_angle(actual, virtual):
+            return min(abs(actual-virtual),2*np.pi-abs(actual-virtual))
+        num_virtuals = np.sum([len(s.virtual_nodes) for s in self.sensors_list]) + 2
+        self.adj_matrix = np.full((num_virtuals, num_virtuals), np.inf)
+        ai = aj = 1
+        for i, u in enumerate([self.s] + self.sensors_list + [self.t]):
+            for j, v in enumerate([self.s] + self.sensors_list + [self.t]):
+                if i != j:
+                    if i == 0 and j == len(self.sensors_list) + 1:
+                        continue
+                    if j == 0 and i == len(self.sensors_list) + 1:
+                        continue
+                    if
+                    if u.xi < v.xi:
+                        for ii, uu in enumerate(u.virtual_nodes):
+                            for jj, vv in enumerate(v.virtual_nodes):
+                                if super().ds(uu, vv) == 0:
+                                    self.adj_matrix[ai+ii][aj+jj] = rotated_angle(vv)
+                aj += len(v.virtual_nodes)
+            ai += len(u.virtual_nodes)
+
 
 
 if __name__ == '__main__':
-    import  distance
-    wbg = WBG(lenght=100, height=20, mode='strong')
-    # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
-    #s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
-    #s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
-    wbg.create_sensors_randomly(50, r=2, alpha=np.pi)
-    wbg.build_WBG()
-    wbg.show_matrix()
-
-
-    # ## debug
-    # for path in Pk:
-    #     if len(path) > 2:
-    #         for i in range(1, len(path)-2):
-    #             res = distance.minimum__sectors_distance(wbg.sensors_list[path[i]-1], wbg.sensors_list[path[i+1]-1])
-    #             wbg.add_dis_2_points([res[0], res[1]])
-
-    # print("######################################################")
-    # Nb, Pk = wbg.max_num_barrier_greedy(8)
-    # print(Nb)
-    # print(Pk)
-    # ## debug
-    # for path in Pk:
-    #     if len(path) > 2:
-    #         for i in range(1, len(path)-2):
-    #             res = distance.minimum__sectors_distance(wbg.sensors_list[path[i]-1], wbg.sensors_list[path[i+1]-1])
-    #             wbg.add_dis_2_points([res[0], res[1]])
-    # wbg.field_show()
-
-
-    print("######################################################")
-    '''
-    dynamic_sens = [Sensor(xi=random.uniform(0, wbg.L), yi = random.uniform(0, wbg.H), betai= random.uniform(0, 360), r=3, alpha=60) for _ in range(10)]
-    for dynamic_sen in dynamic_sens:
-        wbg.add_dynamic(np.array([dynamic_sen.xi, dynamic_sen.yi]))
-        ## hien thi cham do tren do thi
-        ## moi cham ung voi vi tri sensor dong ban dau
-
-    res = wbg.mcbf(3, dynamic_sens)
-    print (res[2])
-    for loc in res[0]:
-        wbg.add_target(loc[:2])
-        ## hien thi cham xanh tren do thi
-        ## moi cham ung voi vi tri muc tieu can dat sensor dong
-    '''
-    Pk, Nm = wbg.min_num_mobile_greedy(3)
-    print("######################################################")
-    print(Pk)
-    print(Nm)
-    logging.info('greedy %d'%Nm)
-    '''
-    for i in range(len(wbg.sensors_list)):
-        for j in range(i+1, len(wbg.sensors_list)):
-            res = distance.minimum__sectors_distance(wbg.sensors_list[i], wbg.sensors_list[j])
-            wbg.add_dis_2_points([res[0], res[1]])'''
-    print("######################################################")
-
-    wbg.field_show()
-    
-    for OMEGA in [0.5,1.0]:
-        for C1 in [2.0,0.5,1.0,1.5,0.1]:
-            for C2 in [0.1,0.5,1.0,1.5,2.0]:
-                print ('CASE: %f, %f, %f'%(OMEGA, C1, C2))
-                min_fit = np.inf
-                fits = []
-                for i in range(30):
-                    wbg.add_population(50, 3, OMEGA, C1, C2)  
-    #wbg.population.initialize()
-    #wbg.population.show()
-    #wbg.population.cross_over()
-    #wbg.population.clone(5)
-    #wbg.population.show()
-    #wbg.population.particles[0].fitness(verbose=True)
-                    fit = wbg.population.evolve(500)
-                    fits.append(fit)
-                    if fit < min_fit:
-                        min_fit = fit
-                    
-                    ###START
-                    # N = 200
-                    # K = 3
-                    # def banana(chrome):
-                    #     mask = np.ones_like(chrome).astype(float) # mask values, 1 if vertex can be selected, else -np.inf
-                    #     mask[0] = -np.inf # s 
-                    #     paths = []
-                    #     result = 0
-                    #     for k in range(K):
-                    #         path = [0]
-                    #         next_v = np.argmax([ch if m == 1 else m for m, ch in zip(mask, chrome)])
-                    #         if mask[next_v]==-np.inf: # invalid
-                    #             path.append(N+1) # direct barrier
-                    #             paths.append(path)
-                    #             continue
-                    #         while next_v <= N:
-                    #             mask[next_v] = -np.inf
-                    #             path.append(next_v)
-                    #             next_v = np.argmax([ch if m == 1 else m for m, ch in zip(mask, chrome)]) # if negative? => BUG
-                    #         mask[next_v] = -np.inf
-                    #         path.append(N+1)
-                    #         paths.append(path)
-                    #     #print (paths)
-                    #     result = np.sum([wbg.length(path) for path in paths])
-                    #     return result
-
-                    # lb = [1]*(1+N+K)
-                    # ub = [100]*(1+N+K)
-
-                    # xopt, fopt = pso(banana, lb, ub)
-                    # print ('pyswarm')
-                    # print (xopt)
-                    # print (fopt)
-                    ###END
-
-                logging.info('CASE: %f, %f, %f'%(OMEGA, C1, C2))
-                mean_fit = np.mean(fits)
-                logging.info('min_fit %d, mean_fit %d'%(min_fit, mean_fit))
-                logging.info('#########')
-
-
-
-    wbg.field_show()
+    import distance
+    dbg = DBG(lenght=20, height=20)
+    #wbg.create_sensors_randomly(20, r=2, alpha=np.pi/6)
+    dbg.add_sensor(Sensor(4,5,0,2,np.pi/6))
+    dbg.add_sensor(Sensor(5,3,-np.pi/2,2,np.pi/6))
+    #dbg.build_WBG()
+    dbg.build_virtual_nodes()
+    #dbg.show_matrix()
+    dbg.field_show()
