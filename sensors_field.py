@@ -10,6 +10,9 @@ import codecs
 import logging
 from circle_util import Geometry
 from math import atan2
+import itertools
+import multiprocessing
+import distance
 #from pyswarm import pso
 
 logging.basicConfig(filename='tunning.log',level=logging.INFO)
@@ -54,8 +57,12 @@ def is_between_angles(value, bisector, angle1, angle2):
                 return not angle_max-2*np.pi <= value-2*np.pi <= angle_min
 
 class Sensor():
-    def __init__(self, xi=None, yi=None, betai=None, r=None, alpha=None):
-        if xi == None or yi == None or betai == None or r == None or alpha == None:
+    def __init__(self, xi=None, yi=None, betai=None, r=None, alpha=None, name=None):
+        self.name = name
+        if self.name in ['s', 't']:
+            self.xi = xi
+            self.xL = self.xR = self.xi
+            self.virtual_nodes = [self]
             return
         self.xi = xi
         self.yi = yi
@@ -101,13 +108,13 @@ class Sensor():
             else:
                 self.yR = self.yi + r * np.sin(angle(self.betai + self.alpha))
         
-
         self.virtual_nodes = []
-                # print(self.xL, self.xR)
 
-        # self.lr = 2 * self.r if alpha >= np.pi / 2 else np.max(self.r, 2 * r * np.sin(alpha))
     def overlap(self, s2):
-        return True if distance.minimum__sectors_distance(self, s2)[2] == 0 else False
+        #return True if np.isclose(distance.minimum__sectors_distance(self, s2)[2], 0) else False #TODO: re implement
+        return distance.is_overlap(self,s2)
+    def add_virtual_node(self, beta):
+        self.virtual_nodes.append(Sensor(self.xi, self.yi, beta, self.r, self.alpha))
     def _get_circle_intersect(self, s2):
         intersections = geom.circle_intersection((self.xi, self.yi, self.r), (s2.xi, s2.yi, s2.r))
         return intersections
@@ -124,43 +131,43 @@ class Sensor():
             
             for intersection in intersections:
                 phi = atan2(intersection[1]-self.yi, intersection[0]-self.xi)
-                self.virtual_nodes.append(angle(phi-self.alpha))
-                self.virtual_nodes.append(angle(phi+self.alpha))
+                self.add_virtual_node(angle(phi-self.alpha))
+                self.add_virtual_node(angle(phi+self.alpha))
         elif r <= d <= np.sqrt(2)*r:
             intersections = self._get_circle_intersect(s2)
             tangencies = s2._get_circle_tangency((self.xi,self.yi))
 
             for intersection in intersections:
                 phi = atan2(intersection[1]-self.yi, intersection[0]-self.xi)
-                self.virtual_nodes.append(angle(phi-self.alpha))
-                self.virtual_nodes.append(angle(phi+self.alpha))
+                self.add_virtual_node(angle(phi-self.alpha))
+                self.add_virtual_node(angle(phi+self.alpha))
 
             phi0 = atan2(tangencies[0][1]-self.yi, tangencies[0][0]-self.xi)
             phi1 = atan2(tangencies[1][1]-self.yi, tangencies[1][0]-self.xi)
             s0s2 = atan2(s2.yi-self.yi, s2.xi-self.xi)
             if is_between_angles(phi0-self.alpha, s0s2, phi0, phi1):
-                self.virtual_nodes.append(angle(phi0+self.alpha))
+                self.add_virtual_node(angle(phi0+self.alpha))
             else:
-                self.virtual_nodes.append(angle(phi0-self.alpha))
+                self.add_virtual_node(angle(phi0-self.alpha))
             if is_between_angles(phi1-self.alpha, s0s2, phi0, phi1):
-                self.virtual_nodes.append(angle(phi1+self.alpha))
+                self.add_virtual_node(angle(phi1+self.alpha))
             else:
-                self.virtual_nodes.append(angle(phi1-self.alpha))
-            s2.virtual_nodes.append(angle(atan2(tangencies[0][1]-s2.yi, tangencies[0][0]-s2.xi)-s2.alpha))
-            s2.virtual_nodes.append(angle(atan2(tangencies[0][1]-s2.yi, tangencies[0][0]-s2.xi)+s2.alpha))
-            s2.virtual_nodes.append(angle(atan2(tangencies[1][1]-s2.yi, tangencies[1][0]-s2.xi)-s2.alpha))
-            s2.virtual_nodes.append(angle(atan2(tangencies[1][1]-s2.yi, tangencies[1][0]-s2.xi)+s2.alpha))
+                self.add_virtual_node(angle(phi1-self.alpha))
+            s2.add_virtual_node(angle(atan2(tangencies[0][1]-s2.yi, tangencies[0][0]-s2.xi)-s2.alpha))
+            s2.add_virtual_node(angle(atan2(tangencies[0][1]-s2.yi, tangencies[0][0]-s2.xi)+s2.alpha))
+            s2.add_virtual_node(angle(atan2(tangencies[1][1]-s2.yi, tangencies[1][0]-s2.xi)-s2.alpha))
+            s2.add_virtual_node(angle(atan2(tangencies[1][1]-s2.yi, tangencies[1][0]-s2.xi)+s2.alpha))
         elif d <= r:
             intersections = self._get_circle_intersect(s2)
 
             for intersection in intersections:
                 phi = atan2(intersection[1]-self.yi, intersection[0]-self.xi)
-                self.virtual_nodes.append(angle(phi-self.alpha))
-                self.virtual_nodes.append(angle(phi+self.alpha))
+                self.add_virtual_node(angle(phi-self.alpha))
+                self.add_virtual_node(angle(phi+self.alpha))
             
             phi = atan2(s2.yi-self.yi, s2.xi-self.xi)
-            self.virtual_nodes.append(angle(phi-self.alpha))
-            self.virtual_nodes.append(angle(phi+self.alpha))
+            self.add_virtual_node(angle(phi-self.alpha))
+            self.add_virtual_node(angle(phi+self.alpha))
 
 class Sensors_field():
     def __init__(self, lenght, height):
@@ -263,8 +270,8 @@ class WBG(Sensors_field):
         Sensors_field.__init__(self, lenght, height)
 
         # sensor ung voi le trai va le phai va ko thuoc sensors_list
-        self.s = Sensor(xi=0)
-        self.t = Sensor(xi=lenght)
+        self.s = Sensor(xi=0, name='s')
+        self.t = Sensor(xi=lenght, name='t')
         if mode not in ['weak', 'strong']:
             raise ValueError
         self.mode = mode
@@ -483,54 +490,109 @@ class DBG(WBG):
             for j in range(i+1, len(self.sensors_list)):
                 u = self.sensors_list[i]
                 v = self.sensors_list[j]
-                u.set_virtual_nodes(v)
-                v.set_virtual_nodes(u)
+                if len(geom.circle_intersection((u.xi,u.yi,u.r),(v.xi,v.yi,v.r)))>0 and i!=j:
+                    u.set_virtual_nodes(v)
+                    v.set_virtual_nodes(u)
         # for s and t
         for i in range(len(self.sensors_list)):
             u = self.sensors_list[i]
             if u.xi <= u.r:
-                u.virtual_nodes.append(angle(+np.arccos(-u.xi/u.r)-u.alpha))
-                u.virtual_nodes.append(angle(-np.arccos(-u.xi/u.r)+u.alpha))
-                u.virtual_nodes.append(angle(+np.arccos(-u.xi/u.r)+u.alpha))
-                u.virtual_nodes.append(angle(-np.arccos(-u.xi/u.r)-u.alpha))
+                u.add_virtual_node(angle(+np.arccos(-u.xi/u.r)-u.alpha))
+                u.add_virtual_node(angle(-np.arccos(-u.xi/u.r)+u.alpha))
+                u.add_virtual_node(angle(+np.arccos(-u.xi/u.r)+u.alpha))
+                u.add_virtual_node(angle(-np.arccos(-u.xi/u.r)-u.alpha))
         for i in range(len(self.sensors_list)):
             u = self.sensors_list[i]
             if u.xi >= self.L-u.r:
-                u.virtual_nodes.append(angle(+np.arccos((self.L-u.xi)/u.r)-u.alpha))
-                u.virtual_nodes.append(angle(-np.arccos((self.L-u.xi)/u.r)+u.alpha))
-                u.virtual_nodes.append(angle(+np.arccos((self.L-u.xi)/u.r)+u.alpha))
-                u.virtual_nodes.append(angle(-np.arccos((self.L-u.xi)/u.r)-u.alpha))
+                u.add_virtual_node(angle(+np.arccos((self.L-u.xi)/u.r)-u.alpha))
+                u.add_virtual_node(angle(-np.arccos((self.L-u.xi)/u.r)+u.alpha))
+                u.add_virtual_node(angle(+np.arccos((self.L-u.xi)/u.r)+u.alpha))
+                u.add_virtual_node(angle(-np.arccos((self.L-u.xi)/u.r)-u.alpha))
+    def rotated_angle(self, actual_node, virtual_node):
+        actual = actual_node.betai
+        virtual = virtual_node.betai
+        return min(abs(angle(actual-virtual)),2*np.pi-abs(angle(actual-virtual)))
+    def fill_mat(self, params):
+        u, v, ai, aj, ii, jj = params
+        if u.virtual_nodes[ii].overlap(v.virtual_nodes[jj]):
+            self.adj_matrix[ai+ii,aj+jj] = self.rotated_angle(v,v.virtual_nodes[jj])
     def build_dbg(self):
-        def rotated_angle(actual, virtual):
-            return min(abs(actual-virtual),2*np.pi-abs(actual-virtual))
         num_virtuals = np.sum([len(s.virtual_nodes) for s in self.sensors_list]) + 2
         self.adj_matrix = np.full((num_virtuals, num_virtuals), np.inf)
+        print ('nvir %d'%num_virtuals)
+        
+        #print ('s->')
+        # s->
+        aj = 1
+        for j, v in enumerate(self.sensors_list):
+            if v.xi <= v.r:
+                for jj, vv in enumerate(v.virtual_nodes):
+                    if np.equal(super().ds(self.s, vv), 0):
+                        self.adj_matrix[0][aj+jj] = self.rotated_angle(v, vv)
+            aj += len(v.virtual_nodes)
+        
+        #print ('t->')
+        # -> t
+        ai = 1
+        for i, u in enumerate(self.sensors_list):
+            if u.xi >= self.L-u.r:
+                for ii, uu in enumerate(u.virtual_nodes):
+                    if np.equal(super().ds(uu, self.t), 0):
+                        self.adj_matrix[ai+ii][num_virtuals-1] = self.rotated_angle(u, uu)
+            ai += len(u.virtual_nodes)
+        
+        pool = multiprocessing.Pool(12)
+        # actual sensors
+        #print ('aaaa')
         ai = aj = 1
-        for i, u in enumerate([self.s] + self.sensors_list + [self.t]):
-            for j, v in enumerate([self.s] + self.sensors_list + [self.t]):
-                if i != j:
-                    if i == 0 and j == len(self.sensors_list) + 1:
-                        continue
-                    if j == 0 and i == len(self.sensors_list) + 1:
-                        continue
-                    if
-                    if u.xi < v.xi:
-                        for ii, uu in enumerate(u.virtual_nodes):
-                            for jj, vv in enumerate(v.virtual_nodes):
-                                if super().ds(uu, vv) == 0:
-                                    self.adj_matrix[ai+ii][aj+jj] = rotated_angle(vv)
+        for i, u in enumerate(self.sensors_list):
+            aj = 1
+            for j, v in enumerate(self.sensors_list):
+                print ('i j ', i, j)
+                if i != j and u.xi < v.xi and len(geom.circle_intersection((u.xi,u.yi,u.r),(v.xi,v.yi,v.r)))>0:
+                    '''
+                    for ii, uu in enumerate(u.virtual_nodes):
+                        for jj, vv in enumerate(v.virtual_nodes):
+                            if uu.overlap(vv):
+                                self.adj_matrix[ai+ii][aj+jj] = rotated_angle(v, vv)
+                    '''
+                    ii_list = range(len(u.virtual_nodes))
+                    jj_list = range(len(v.virtual_nodes))
+                    paramlist = list(itertools.product([u],[v],[ai],[aj],ii_list,jj_list))
+                    pool.map(self.fill_mat,paramlist)
                 aj += len(v.virtual_nodes)
             ai += len(u.virtual_nodes)
-
+    def show_matrix(self):
+        print(self.adj_matrix)
+    def dfs(self, s, visited, t):
+        if s not in visited:
+            visited.append(s)
+            if s == t:
+                return True
+            for u in range(len(self.adj_matrix[s])):
+                if self.adj_matrix[s][u] != np.inf:
+                    self.dfs(u, visited, t)
+            del visited[-1]
+        return False
 
 
 if __name__ == '__main__':
-    import distance
-    dbg = DBG(lenght=20, height=20)
-    #wbg.create_sensors_randomly(20, r=2, alpha=np.pi/6)
-    dbg.add_sensor(Sensor(4,5,0,2,np.pi/6))
-    dbg.add_sensor(Sensor(5,3,-np.pi/2,2,np.pi/6))
-    #dbg.build_WBG()
-    dbg.build_virtual_nodes()
-    #dbg.show_matrix()
-    dbg.field_show()
+    for n in np.arange(40,90,10):
+        rate = 0.0
+        for simulation in range(20):
+            print ('sim %d'%simulation)
+            dbg = DBG(lenght=500, height=100)
+            dbg.create_sensors_randomly(num_sensor=n, r=50, alpha=np.pi/6)
+            #dbg.add_sensor(Sensor(4,5,0,2,np.pi/6))
+            #dbg.add_sensor(Sensor(5,3,-np.pi/2,2,np.pi/6))
+            dbg.field_show()
+            #dbg.build_WBG()
+            print ('build vir')
+            dbg.build_virtual_nodes()
+            print ('build dbg')
+            dbg.build_dbg()
+            #dbg.show_matrix()            
+            rate += dbg.dfs(0, [], np.sum([len(s.virtual_nodes) for s in dbg.sensors_list]) + 1)
+            print (rate)
+        rate/=20.0
+        print ("rate after %d: %f"%(n, rate))

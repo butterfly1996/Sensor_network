@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 import numpy as np
+from sympy.geometry import Circle, Point
 
 from math import cos, sin, pi, sqrt, atan2, acos
 d2r = pi/180
@@ -21,13 +22,10 @@ class Geometry(object):
         dx,dy = x2-x1,y2-y1
         d = sqrt(dx*dx+dy*dy)
         if d > r1+r2:
-            print ("#1")
             return [] # no solutions, the circles are separate
         if d < abs(r1-r2):
-            print ("#2")
             return [] # no solutions because one circle is contained within the other
         if d == 0 and r1 == r2:
-            print ("#3")
             return [] # circles are coincident and there are an infinite number of solutions
 
         a = (r1*r1-r2*r2+d*d)/(2*d)
@@ -38,25 +36,20 @@ class Geometry(object):
         xs2 = xm - h*dy/d
         ys1 = ym - h*dx/d
         ys2 = ym + h*dx/d
+        
+        if np.isclose(xs1,xs2) and np.isclose(ys1,ys2):
+            return [(xs1,ys1)]
 
-        return (xs1,ys1),(xs2,ys2)
+        return [(xs1,ys1),(xs2,ys2)]
 
     def circle_intersection_sympy(self, circle1, circle2):
-        from sympy.geometry import Circle, Point
+        
         x1,y1,r1 = circle1
         x2,y2,r2 = circle2
         c1=Circle(Point(x1,y1),r1)
         c2=Circle(Point(x2,y2),r2)
         intersection = c1.intersection(c2)
-        if len(intersection) == 1:
-            intersection.append(intersection[0])
-        if len(intersection) == 0:
-            return []
-        p1 = intersection[0]
-        p2 = intersection[1]
-        xs1,ys1 = p1.x,p1.y
-        xs2,ys2 = p2.x,p2.y
-        return (xs1,ys1),(xs2,ys2)
+        return [tuple(map(float, l)) for l in intersection]
     
     def circle_tangency(self, circle, point):
         (Px, Py) = point
@@ -75,21 +68,18 @@ class Geometry(object):
         T2x = Cx + a * cos(d2)
         T2y = Cy + a * sin(d2)
 
-        return (T1x, T1y), (T2x, T2y)
+        if np.isclose(T1x,T2x) and np.isclose(T1y,T2y):
+            return [(T1x, T1y)]
+
+        return [(T1x, T1y), (T2x, T2y)]
 
     def circle_tangency_sympy(self, circle, point):
-        from sympy.geometry import Circle, Point
         point = Point(point)
         (Cx, Cy, a) = circle
         circle = Circle(Point(Cx, Cy), a)
         
         tangency = circle.tangent_lines(point)
 
-        if len(tangency) == 1:
-            tangency.append(tangency[0])
-        if len(tangency) == 0:
-            return []
-        
         return [tuple(map(float, l.points[1])) for l in tangency]
 
 def test_circle_intersection():
