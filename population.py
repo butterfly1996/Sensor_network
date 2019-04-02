@@ -1,15 +1,14 @@
 import numpy as np
 from particle import Particle
 
-
 class Population:
     def __init__(self, wbg, num_particles, K):
         print ('Init population ...')
         self.wbg = wbg
         self.num_bins = 50 # TODO: refactor
-        self.c1 = 1
-        self.c2 = 1
-        self.omega = 2
+        self.c1 = 0.2
+        self.c2 = 0.4
+        self.omega = 0.95
         self.particles = [Particle(self, wbg, K) for i in range(num_particles)]
         self.best_fit = np.inf
 
@@ -75,17 +74,9 @@ class Population:
             self.cross_over()
             # print('update...')
             self.update()
-            # if (iter+1)%50==0:
-            if iter%10 ==0:
-                print('Iter %d, fitness=%d'%(iter, self.best_fit))
-                print(np.linalg.norm(self.best_g),
-                      np.linalg.norm(self.particles[np.argmin([particle.fitness() for particle in self.particles])].velocity),
-                      np.linalg.norm(self.particles[np.argmin([particle.fitness() for particle in self.particles])].chrome -
-                                     self.particles[np.argmin([particle.fitness() for particle in self.particles])].population.best_g),
-                      )
-                best = self.particles[
-                    np.argmin([particle.fitness() for particle in self.particles])]
-                best.compute_fitness(verbose=True)
+            # if (iter+1)%10==0:
+            #     print('Iter %d, fitness=%d'%(iter, self.best_fit))
+
 
     def show(self):
         for i, particle in enumerate(self.particles):

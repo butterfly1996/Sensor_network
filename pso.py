@@ -1,14 +1,16 @@
 import numpy as np
 import copy
 
-class Population():
+
+class Population:
     def __init__(self, wbg, num_particles, K):
         print ('Init population ...')
         self.wbg = wbg
         self.num_bins = 50 # TODO: refactor
-        self.c1 = 2
-        self.c2 = 2
+        self.c1 = 0.2
+        self.c2 = 0.1
         self.particles = [Particle(self, wbg, K) for i in range(num_particles)]
+
     def initialize(self):
         for i in range(len(self.particles)):
             self.particles[i].initialize()
@@ -16,8 +18,10 @@ class Population():
             self.particles[i].compute_density(self.num_bins)
         self.best_g = self.particles[np.argmin([particle.fitness() for particle in self.particles])].chrome.copy()
         self.best_fit = np.min([particle.fitness() for particle in self.particles])
+
     def rollete(self, id_list, prob_list, num_choices):
         return np.random.choice(id_list, size=num_choices,p=prob_list)
+
     def clone(self, num_chosen_immune):
         argsort = np.argsort([particle.affinity() for particle in self.particles])[::-1] # desc
         immune_lib = argsort[:int(len(argsort)/5)] # get top 20%
@@ -26,6 +30,7 @@ class Population():
         probs = [self.particles[i].ps(self.num_bins) for i in antibodies]
         next_gen_ids = self.rollete(antibodies, prob_list=np.array(probs)/np.sum(probs), num_choices=len(argsort))
         self.particles = [self.particles[i] for i in next_gen_ids]
+
     def cross_over(self):
         argsort = np.argsort([particle.affinity() for particle in self.particles]) # asc
         parents = argsort[:int(len(argsort)/(10/3))] # get top 30%
@@ -35,6 +40,7 @@ class Population():
             self.particles[parents[i]], self.particles[parents[i+1]] = self.particles[parents[i]].cross_over(self.particles[parents[i+1]])
         for i in range(len(self.particles)):
             self.particles[i].compute_density(self.num_bins)
+
     def update(self):
         for i in range(len(self.particles)):
             if i in self.parents: # mutation after crossover
@@ -43,9 +49,11 @@ class Population():
                 self.particles[i].update()
         for i in range(len(self.particles)):
             self.particles[i].compute_density(self.num_bins)
-        if np.min([particle.fitness() for particle in self.particles]) < self.best_fit:
+        tmp_fit = np.min([particle.fitness() for particle in self.particles])
+        if tmp_fit < self.best_fit:
             self.best_g = self.particles[np.argmin([particle.fitness() for particle in self.particles])].chrome.copy()
-            self.best_fit = np.min([particle.fitness() for particle in self.particles])
+            self.best_fit = tmp_fit
+
     def evolve(self, MAX_ITER=500):
         self.initialize()
         for iter in range(MAX_ITER):
@@ -56,16 +64,21 @@ class Population():
             self.cross_over()
             #print('update...')
             self.update()
-            if (iter+1)%50==0:
+            if (iter+1)%10==0:
                 print('Iter %d, fitness=%d'%(iter, self.best_fit))
-
-
+                print(
+                    np.linalg.norm(self.particles[np.argmin([particle.fitness() for particle in self.particles])].chrome),
+                    np.linalg.norm(self.particles[np.argmin([particle.fitness() for particle in self.particles])].velocity),
+                    np.linalg.norm(self.particles[np.argmin([particle.fitness() for particle in self.particles])].chrome -
+                                   self.particles[np.argmin([particle.fitness() for particle in self.particles])].best_p),
+                )
 
     def show(self):
         for i, particle in enumerate(self.particles):
             print('\nParticle %d, fitness %d,  affinity %f, density %f, prob %f:'%(i, particle.fitness(), particle.affinity(), particle.density(), particle.ps(self.num_bins)))
             print(particle.chrome)
             print(particle._paths)
+
 
 class Particle():
     def __init__(self, population, wbg, K):
@@ -79,6 +92,8 @@ class Particle():
         self.velocity = np.random.randn(self.N+1+self.K)
         self.c1 = self.population.c1
         self.c2 = self.population.c2
+        self.omega = 0.10
+
     def initialize(self):
         # TODO: refactor setter
         self.compute_fitness()
@@ -87,11 +102,14 @@ class Particle():
 
         self.best_p = self.chrome.copy()
         self.best_fit = self.fitness()
+
     def gen_rand(self):
-        res = np.random.rand(1)[0]
-        return res if res not in [0.25,0.5,0.75] else gen_rand()
+        res = np.random.uniform(0, 1)
+        return res #if res not in [0.25,0.5,0.75] else self.gen_rand()
+
     def get_population(self):
         return self.population
+
     def compute_fitness(self, verbose=False):
         mask = np.ones_like(self.chrome).astype(float) # mask values, 1 if vertex can be selected, else -np.inf
         mask[0] = -np.inf # s 
@@ -118,27 +136,37 @@ class Particle():
             print ('\nfitness: %d'%result)
         self._paths = paths
         self._fitness = result
+
     def fitness(self):
         return self._fitness
+
     def compute_affinity(self):
         self._affinity = 1.0/(1+self.fitness())
+
     def affinity(self):
         return self._affinity
+
     def compute_density(self, num_bins):
         epsilon = 0.001
         max_aff = np.max([particle.affinity() for particle in self.population.particles])+epsilon
         min_aff = np.min([particle.affinity() for particle in self.population.particles])
         bin_size = (max_aff-min_aff)/num_bins
         bin_id = np.floor(self.affinity() / bin_size)
-        self._density = np.sum([bin_id*bin_size<=particle.affinity()<(bin_id+1)*bin_size for particle in self.population.particles])
+        self._density = np.sum([bin_id*bin_size<=particle.affinity()<(bin_id+1)*bin_size
+                                for particle in self.population.particles])
+
     def density(self):
         return self._density
+
     def ps(self, num_bins, alpha=0.7):
         return alpha*self.pf()+(1-alpha)*self.pd(num_bins)
+
     def pf(self):
         return 1.0-self.fitness()/(np.sum(particle.fitness() for particle in self.population.particles))
+
     def pd(self, num_bins):
         return 1.0-self.density()/(np.sum([particle.density() for particle in self.population.particles]))
+
     def cross_over(self, other_particle):
         point1, point2 = np.random.choice(np.arange(len(self.chrome)+1), 2, replace=False)
         point1, point2 = min(point1, point2), max(point1, point2)
@@ -155,17 +183,25 @@ class Particle():
         # other_particle.compute_density(self.population.num_bins)
 
         return self, other_particle
+
     def mutation(self):
-        self.rand1 = 4*self.rand1*(1-self.rand1)
-        self.rand2 = 4*self.rand2*(1-self.rand2)
+        # self.rand1 = 4*self.rand1*(1-self.rand1)
+        # self.rand2 = 4*self.rand2*(1-self.rand2)
+        self.rand1 = np.random.uniform(0, 1)
+        self.rand2 = np.random.uniform(0, 1)
+        # max_priority = np.max(self.population.best_g)
+        self.velocity += np.random.uniform(0, 1, self.N+1+self.K)
+
     def update(self, mutation=False):
         if mutation:
             self.mutation()
         else:
-            self.rand1 = np.random.rand(1)[0]
-            self.rand2 = np.random.rand(1)[0]
-        self.velocity = 0.8*self.velocity + self.c1*self.rand1*(self.best_p-self.chrome)+self.c2*self.rand2*(self.population.best_g-self.chrome)
-        self.chrome += self.velocity # TODO: refactor setter
+            self.rand1 = np.random.uniform(0, 1)
+            self.rand2 = np.random.uniform(0, 1)
+        self.velocity = 0.95*self.velocity + self.c1*self.rand1*(self.best_p-self.chrome)+self.c2*self.rand2*(self.population.best_g-self.chrome)
+        # print(np.linalg.norm(self.chrome))
+        # print(np.linalg.norm(self.velocity), np.linalg.norm(self.best_p-self.chrome), np.linalg.norm(self.population.best_g-self.chrome))
+        self.chrome += self.omega * self.velocity # TODO: refactor setter
         # DEBUG:
         #print("debug: ")
         #print(self.chrome)

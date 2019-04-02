@@ -1,26 +1,104 @@
 import numpy as np
 from sensors_field import Sensor
+
+
 def arctan(y, x):
-    if x >= 0:
+    # if x >= 0:
+    #     return np.arctan(y/x)
+    if x == 0:
+        if y > 0:
+            return np.pi / 2
+        else:
+            return np.pi * 3 / 2
+    if x > 0:
         return np.arctan(y/x)
-    elif y > 0:
-        return np.pi+np.arctan(y/x)
     else:
-        return -np.pi+np.arctan(y/x)
+        return np.pi+np.arctan(y/x)
+
 
 def angle(value):
     # chuan hoa gia tri goc tu -pi den pi
-    return (value+np.pi) % (2*np.pi) - np.pi
+    return (value) % (2*np.pi)
+    # return (value+np.pi) % (2*np.pi) - np.pi
+
 
 def is_between_angles(value, angle1, angle2):
     angle_min = min(angle1, angle2)
     angle_max = max(angle1, angle2)
+    # angle_min = min(angle(angle1), angle(angle2))
+    # angle_max = max(angle(angle1), angle(angle2))
+    # return angle_min <= angle(value) <= angle_max
     if angle_max-angle_min < np.pi:
         return angle_min <= value <= angle_max
     elif value < 0:
         return angle_max-2*np.pi <= value <= angle_min
     else:
         return angle_max-2*np.pi <= value-2*np.pi <= angle_min
+
+def is_between_anglesHai(value, beta, alpha):
+    return abs(angle(beta - value)) <= alpha
+
+SMALL_NUM = 0.00000001
+def closestDistanceBetweenLinesHai(a0,a1,b0,b1):
+    u = a1 - a0
+    v = b1 - b0
+    w = a0 - b0
+    a = np.dot(u, u)
+    b = np.dot(u, v)
+    c = np.dot(v, v)
+    d = np.dot(u, w)
+    e = np.dot(v, w)
+    D = a * c - b * b
+    sc, sN, sD = D, D, D
+    tc, tN, tD = D, D, D
+
+    # compute the line parameters of the two closest points
+    if D < SMALL_NUM:# the lines are almost parallel
+        sN = 0.0# force using point P0 on segment S1
+        sD = 1.0# to prevent possible division by 0.0 later
+        tN = e
+        tD = c
+    else:# get the closest points on the infinite lines
+        sN = (b * e - c * d)
+        tN = (a * e - b * d)
+        if (sN < 0.0): # sc < 0 = > the s=0 edge is visible
+            sN = 0.0
+            tN = e
+            tD = c
+        elif sN > sD: # sc > 1  = > the s=1 edge is visible
+            sN = sD
+            tN = e + b
+            tD = c
+
+    if tN < 0.0: # tc < 0 = > the t=0 edge is visible
+        tN = 0.0
+        #recompute sc for this edge
+        if -d < 0.0:
+            sN = 0.0
+        elif -d > a:
+            sN = sD
+        else:
+            sN = -d
+            sD = a
+    elif tN > tD: # tc > 1  = > the t=1 edge is visible
+        tN = tD
+        # recompute sc for this edge
+        if ((-d + b) < 0.0):
+            sN = 0
+        elif (-d + b) > a:
+            sN = sD
+        else:
+            sN = (-d +  b)
+            sD = a
+    # finally do the division to get sc and tc
+    sc = 0 if abs(sN) < SMALL_NUM else sN / sD
+    tc = 0 if abs(tN) < SMALL_NUM else tN / tD
+
+    # get the difference of the two closest points Vector
+    dP = w + (sc * u) - (tc * v) # =  S1(sc) - S2(tc)
+
+    return np.linalg.norm(dP)# return the closest distance
+
 
 def closestDistanceBetweenLines(a0,a1,b0,b1,clampAll=True,clampA0=True,clampA1=True,clampB0=True,clampB1=True):
 
@@ -129,6 +207,7 @@ def closestDistanceBetweenLines(a0,a1,b0,b1,clampAll=True,clampA0=True,clampA1=T
 
     return [pA[:2], pB[:2], np.linalg.norm(pA-pB)]
 
+
 def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
     res = []
     # arc1
@@ -172,8 +251,6 @@ def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
             res.append([endpoint1, np.array([center2[0] + r * np.cos(phi), center2[1] + r * np.sin(phi)]), d])
         else:
             res.append([None, None, 0])
-
-
     phi = arctan((endpoint2[1] - center2[1]) , (endpoint2[0] - center2[0]))
     if (endpoint2[0] - center2[0]) == 0:
         phi = np.sign(endpoint2[1] - center2[1])*np.pi/2
@@ -199,6 +276,7 @@ def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
     phi2 = arctan((endpoint2[1] - center2[1]) , (endpoint2[0] - center2[0]))
     if endpoint2[0] - center2[0] == 0:
         phi2 = np.sign(endpoint2[1] - center2[1])*np.pi/2
+
     def sign(value):
         if value >= 0:
             return 1
@@ -224,12 +302,15 @@ def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
         xs2 = xm - h * dy / d
         ys1 = ym - h * dx / d
         ys2 = ym + h * dx / d
-        if is_between_angles(arctan((ys1-center1[1]),(xs1-center1[0])), angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(arctan((ys1-center2[1]),(xs1-center2[0])), angle(beta2-alpha), angle(beta2+alpha)):
+        if is_between_angles(arctan((ys1-center1[1]),(xs1-center1[0])), angle(beta1-alpha), angle(beta1+alpha)) \
+                and is_between_angles(arctan((ys1-center2[1]),(xs1-center2[0])), angle(beta2-alpha), angle(beta2+alpha)):
             res.append([np.array([xs1, ys1]), np.array([xs1, ys1]), 0])
-        if is_between_angles(arctan((ys2-center1[1]),(xs2-center1[0])), angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(arctan((ys2-center2[1]),(xs2-center2[0])), angle(beta2-alpha), angle(beta2+alpha)):
+        if is_between_angles(arctan((ys2-center1[1]),(xs2-center1[0])), angle(beta1-alpha), angle(beta1+alpha)) \
+                and is_between_angles(arctan((ys2-center2[1]),(xs2-center2[0])), angle(beta2-alpha), angle(beta2+alpha)):
             res.append([np.array([xs2, ys2]), np.array([xs2, ys2]), 0])
     res = np.array(res)
     return res[np.argmin(res[:, 2])]
+
 
 def closestDistanceBetweenArcAndLine(a0, a1, center, beta, r, alpha):
     ### a0 a1 la 2 dau mut cua doan thang
@@ -301,7 +382,73 @@ def closestDistanceBetweenArcAndLine(a0, a1, center, beta, r, alpha):
     res = np.array(res)
     return res[np.argmin(res[:, 2])]
 
-def minimum__sectors_distance(sensor1, sensor2):
+SMALL_ANGLE = 0.0001
+def is_point_in_fan(point, center, beta, r, alpha):
+    if np.linalg.norm(point - center) > r:
+        return False
+    phi = np.arctan((point[1]-center[1])/(point[0]-center[0]))
+    if point[1]-center[1] < 0:
+        phi += np.pi
+    if alpha >= np.pi - SMALL_ANGLE: # de phong sai so truong hop gan voi pi (Tuc ca duong tron)
+        return True
+    arg_min = min((beta - alpha)%(2*np.pi), (beta + alpha)%(2*np.pi))
+    arg_max = max((beta - alpha)%(2*np.pi), (beta + alpha)%(2*np.pi))
+    return arg_min <= phi%(2*np.pi) <= arg_max
+
+def closest_distance_between_point2arc(point, center, beta, r, alpha, code1=-1, code2=-1):
+    if is_point_in_fan(point, center, beta, r, alpha):
+        return 0
+        # return [None, None, 0]
+    end_point1 = np.array([center[0] + r*np.cos(beta - alpha), center[1] + r*np.sin(beta - alpha)])
+    end_point2 = np.array([center[0] + r*np.cos(beta + alpha), center[1] + r*np.sin(beta + alpha)])
+    res = [np.linalg.norm(point - end_point1), np.linalg.norm(point - end_point2)]
+    # intersection of radius and arc
+    t = r / np.linalg.norm(point - center)
+    small_distance = np.array([SMALL_NUM, SMALL_NUM])
+    intersec_point1 = np.array([center[0] + (point[0] - center[0])*t, center[1] + (point[1] - center[1])*t])
+    intersec_point2 = np.array([center[0] - (point[0] - center[0])*t, center[1] - (point[1] - center[1])*t])
+    u = point - center
+    phi = arctan(u[1], u[0])
+    if is_between_anglesHai(phi, beta, alpha):
+        return (abs(t-1))*np.linalg.norm(point - center)
+    if is_between_anglesHai(phi + np.pi, beta, alpha):
+        return (abs(t+1))*np.linalg.norm(point - center)
+    return min(res)
+
+def closesDistanceBetweenArcsHai(center1, center2, beta1, beta2, r, alpha, code1=-1, code2=-1):
+    # arc1
+    endpoint1 = center1 + np.array([r * np.cos(beta1 - alpha), r * np.sin(beta1 - alpha)])
+    endpoint2 = center1 + np.array([r * np.cos(beta1 + alpha), r * np.sin(beta1 + alpha)])
+    # arc2
+    endpoint3 = center2 + np.array([r * np.cos(beta2 - alpha), r * np.sin(beta2 - alpha)])
+    endpoint4 = center2 + np.array([r * np.cos(beta2 + alpha), r * np.sin(beta2 + alpha)])
+    res = [
+        closest_distance_between_point2arc(endpoint1, center2, beta2, r, alpha),
+        closest_distance_between_point2arc(endpoint2, center2, beta2, r, alpha),
+        closest_distance_between_point2arc(endpoint3, center1, beta1, r, alpha),
+        closest_distance_between_point2arc(endpoint4, center1, beta1, r, alpha)
+    ]
+    u = center2 - center1
+    phi = arctan(u[1], u[0])
+    if code1 == 2 and code2 == 30:
+        print(phi, end="\t")
+        print(beta1 - alpha, end="\t")
+        print(beta1 + alpha, end="\t")
+        print(beta2 - alpha, end="\t")
+        print(beta2 + alpha)
+        print(angle(phi), end="\t")
+        print(angle(beta1 - alpha), end="\t")
+        print(angle(beta1 + alpha), end="\t")
+        print(angle(beta2 - alpha), end="\t")
+        print(angle(beta2 + alpha))
+        print(is_between_anglesHai(angle(np.pi + phi), beta2, alpha), is_between_anglesHai(phi, beta1, alpha))
+    if is_between_anglesHai(angle(np.pi + phi), beta2, alpha) and is_between_anglesHai(phi, beta1, alpha):
+        res.append(max(closest_distance_between_point2arc(center2, center1, beta1, r, alpha) - r, 0, code1, code2))
+        res.append(max(closest_distance_between_point2arc(center1, center2, beta2, r, alpha) - r, 0, code2, code2))
+    return min(res)
+
+
+def minimum__sectors_distance(sensor1, sensor2, code1=-1, code2=-1):
     # TODO: thang hai lam not phan sensor cua may di, k/c 2 sensor = min(khoang cach canh-canh, canh-cung, cung-cung)
     resultarray = []
     a0 = np.array([sensor1.xi, sensor1.yi])
@@ -310,14 +457,17 @@ def minimum__sectors_distance(sensor1, sensor2):
     b0 = np.array([sensor2.xi, sensor2.yi])
     b1 = np.array([sensor2.xi + sensor2.r * np.cos(sensor2.betai - sensor2.alpha), sensor2.yi + sensor2.r * np.sin(sensor2.betai - sensor2.alpha)])
     b2 = np.array([sensor2.xi + sensor2.r * np.cos(sensor2.betai + sensor2.alpha), sensor2.yi + sensor2.r * np.sin(sensor2.betai + sensor2.alpha)])
-    resultarray.append(closestDistanceBetweenLines(a0, a1, b0, b1))
-    resultarray.append(closestDistanceBetweenLines(a0, a1, b0, b2))
-    resultarray.append(closestDistanceBetweenLines(a0, a2, b0, b1))
-    resultarray.append(closestDistanceBetweenLines(a0, a2, b0, b2))
-    resultarray.append(closesDistanceBetweenArcs(a0, b0, sensor1.betai, sensor2.betai, sensor1.r, sensor1.alpha))
-    resultarray.append(closestDistanceBetweenArcAndLine(a0, a1, b0, sensor2.betai, sensor2.r, sensor2.alpha))
-    resultarray.append(closestDistanceBetweenArcAndLine(a0, a2, b0, sensor2.betai, sensor2.r, sensor2.alpha))
-    resultarray.append(closestDistanceBetweenArcAndLine(b0, b1, a0, sensor1.betai, sensor1.r, sensor1.alpha))
-    resultarray.append(closestDistanceBetweenArcAndLine(b0, b2, a0, sensor1.betai, sensor1.r, sensor1.alpha))
+    resultarray.append(closestDistanceBetweenLinesHai(a0, a1, b0, b1))
+    resultarray.append(closestDistanceBetweenLinesHai(a0, a1, b0, b2))
+    resultarray.append(closestDistanceBetweenLinesHai(a0, a2, b0, b1))
+    resultarray.append(closestDistanceBetweenLinesHai(a0, a2, b0, b2))
+    resultarray.append(closesDistanceBetweenArcsHai(a0, b0, sensor1.betai, sensor2.betai, sensor1.r, sensor1.alpha, code1, code2))
+    resultarray.append(closestDistanceBetweenArcAndLine(a0, a1, b0, sensor2.betai, sensor2.r, sensor2.alpha)[2])
+    resultarray.append(closestDistanceBetweenArcAndLine(a0, a2, b0, sensor2.betai, sensor2.r, sensor2.alpha)[2])
+    resultarray.append(closestDistanceBetweenArcAndLine(b0, b1, a0, sensor1.betai, sensor1.r, sensor1.alpha)[2])
+    resultarray.append(closestDistanceBetweenArcAndLine(b0, b2, a0, sensor1.betai, sensor1.r, sensor1.alpha)[2])
+    # print(resultarray)
     resultarray = np.array(resultarray)
-    return resultarray[np.argmin(resultarray[:, 2])]
+    # print(resultarray)
+    return np.min(resultarray)
+    # return resultarray[np.argmin(resultarray[:, 2])]
