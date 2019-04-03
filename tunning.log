@@ -1,0 +1,605 @@
+DEBUG:matplotlib.font_manager:findfont: Matching :family=sans-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0 to DejaVu Sans ('/home/sinh/.local/lib/python3.6/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf') with score of 0.050000
+INFO:root:greedy 57
+DEBUG:matplotlib.font_manager:findfont: Matching :family=sans-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0 to DejaVu Sans ('/home/sinh/.local/lib/python3.6/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf') with score of 0.050000
+INFO:root:greedy 58
+INFO:root:CASE: 0.500000, 0.100000, 0.100000
+INFO:root:min_fit 73, mean_fit 78
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.100000, 0.500000
+INFO:root:min_fit 74, mean_fit 85
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.100000, 1.000000
+INFO:root:min_fit 74, mean_fit 84
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.100000, 1.500000
+INFO:root:min_fit 74, mean_fit 83
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.100000, 2.000000
+INFO:root:min_fit 74, mean_fit 80
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 0.100000
+INFO:root:min_fit 74, mean_fit 80
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 0.500000
+INFO:root:min_fit 74, mean_fit 81
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 1.000000
+INFO:root:min_fit 73, mean_fit 82
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 1.500000
+INFO:root:min_fit 73, mean_fit 79
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 2.000000
+INFO:root:min_fit 74, mean_fit 80
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 0.100000
+INFO:root:min_fit 73, mean_fit 78
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 0.500000
+INFO:root:min_fit 73, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 1.000000
+INFO:root:min_fit 72, mean_fit 79
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 1.500000
+INFO:root:min_fit 72, mean_fit 79
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 2.000000
+INFO:root:min_fit 73, mean_fit 76
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 0.100000
+INFO:root:min_fit 73, mean_fit 76
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 0.500000
+INFO:root:min_fit 73, mean_fit 78
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 1.000000
+INFO:root:min_fit 73, mean_fit 78
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 1.500000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 2.000000
+INFO:root:min_fit 73, mean_fit 77
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 0.100000
+INFO:root:min_fit 72, mean_fit 77
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 0.500000
+INFO:root:min_fit 73, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 1.000000
+INFO:root:min_fit 73, mean_fit 78
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 1.500000
+INFO:root:min_fit 73, mean_fit 76
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 2.000000
+INFO:root:min_fit 72, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.100000, 0.100000
+INFO:root:min_fit 73, mean_fit 76
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.100000, 0.500000
+INFO:root:min_fit 73, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.100000, 1.000000
+INFO:root:min_fit 74, mean_fit 76
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.100000, 1.500000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.100000, 2.000000
+INFO:root:min_fit 73, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.500000, 0.100000
+INFO:root:min_fit 73, mean_fit 78
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.500000, 0.500000
+INFO:root:min_fit 73, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.500000, 1.000000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.500000, 1.500000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 0.500000, 2.000000
+INFO:root:min_fit 73, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.000000, 0.100000
+INFO:root:min_fit 72, mean_fit 77
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.000000, 0.500000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.000000, 1.000000
+INFO:root:min_fit 74, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.000000, 1.500000
+INFO:root:min_fit 73, mean_fit 76
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.000000, 2.000000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.500000, 0.100000
+INFO:root:min_fit 72, mean_fit 77
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.500000, 0.500000
+INFO:root:min_fit 73, mean_fit 77
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.500000, 1.000000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.500000, 1.500000
+INFO:root:min_fit 72, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.500000, 2.000000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.100000
+INFO:root:min_fit 73, mean_fit 80
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.500000
+INFO:root:min_fit 73, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 1.000000
+INFO:root:min_fit 71, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 1.500000
+INFO:root:min_fit 72, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 2.000000
+INFO:root:min_fit 73, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.900000, 0.100000, 0.100000
+INFO:root:min_fit 73, mean_fit 76
+INFO:root:#########
+INFO:root:CASE: 0.900000, 0.100000, 0.500000
+INFO:root:min_fit 72, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.900000, 0.100000, 1.000000
+INFO:root:min_fit 73, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 0.900000, 0.100000, 1.500000
+INFO:root:min_fit 74, mean_fit 75
+INFO:root:#########
+INFO:root:greedy 58
+INFO:root:greedy 61
+INFO:root:greedy 57
+INFO:root:greedy 60
+INFO:root:greedy 57
+INFO:root:greedy 59
+INFO:root:greedy 58
+INFO:root:greedy 61
+INFO:root:greedy 32
+INFO:root:greedy 34
+INFO:root:greedy 36
+INFO:root:CASE: 0.800000, 1.500000, 1.500000
+INFO:root:min_fit 72, mean_fit 77
+INFO:root:#########
+INFO:root:greedy 36
+INFO:root:greedy 34
+INFO:root:greedy 35
+INFO:root:greedy 30
+INFO:root:greedy 33
+INFO:root:CASE: 0.800000, 1.500000, 1.500000
+INFO:root:min_fit 4, mean_fit 4
+INFO:root:#########
+INFO:root:greedy 36
+INFO:root:greedy 31
+INFO:root:greedy 25
+INFO:root:greedy 28
+INFO:root:greedy 49
+INFO:root:greedy 48
+INFO:root:greedy 40
+INFO:root:greedy 54
+INFO:root:greedy 74
+INFO:root:greedy 72
+INFO:root:greedy 74
+INFO:root:greedy 73
+INFO:root:greedy 74
+INFO:root:greedy 73
+INFO:root:greedy 72
+INFO:root:greedy 73
+INFO:root:greedy 72
+INFO:root:greedy 72
+INFO:root:greedy 61
+INFO:root:greedy 58
+INFO:root:greedy 56
+INFO:root:greedy 54
+INFO:root:greedy 59
+INFO:root:greedy 56
+INFO:root:CASE: 1.000000, 0.100000, 0.100000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 0.500000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 1.000000
+INFO:root:min_fit 70, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 2.000000
+INFO:root:min_fit 70, mean_fit 83
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 0.100000
+INFO:root:min_fit 72, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 0.500000
+INFO:root:min_fit 69, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 1.000000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 2.000000
+INFO:root:min_fit 70, mean_fit 79
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 0.500000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 1.000000
+INFO:root:min_fit 70, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 2.000000
+INFO:root:min_fit 71, mean_fit 76
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 0.500000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:greedy 60
+INFO:root:greedy 23
+INFO:root:greedy 25
+INFO:root:greedy 24
+INFO:root:greedy 20
+INFO:root:greedy 21
+INFO:root:greedy 21
+INFO:root:greedy 20
+INFO:root:greedy 20
+INFO:root:greedy 21
+INFO:root:greedy 25
+INFO:root:greedy 23
+INFO:root:greedy 20
+INFO:root:CASE: 1.000000, 0.100000, 0.100000
+INFO:root:min_fit 74, mean_fit 238
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 0.500000
+INFO:root:min_fit 101, mean_fit 288
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 1.000000
+INFO:root:min_fit 158, mean_fit 312
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 2.000000
+INFO:root:min_fit 207, mean_fit 336
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 0.100000
+INFO:root:min_fit 72, mean_fit 90
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 0.500000
+INFO:root:min_fit 96, mean_fit 175
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 1.000000
+INFO:root:min_fit 73, mean_fit 206
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 2.000000
+INFO:root:min_fit 92, mean_fit 238
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 0.100000
+INFO:root:min_fit 70, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 0.500000
+INFO:root:min_fit 73, mean_fit 114
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 1.000000
+INFO:root:min_fit 82, mean_fit 145
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 2.000000
+INFO:root:min_fit 73, mean_fit 181
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 0.100000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 0.500000
+INFO:root:min_fit 72, mean_fit 79
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 1.000000
+INFO:root:min_fit 73, mean_fit 105
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 2.000000
+INFO:root:min_fit 76, mean_fit 133
+INFO:root:#########
+INFO:root:greedy 25
+INFO:root:greedy 24
+INFO:root:greedy 20
+INFO:root:greedy 21
+INFO:root:greedy 18
+INFO:root:greedy 19
+INFO:root:greedy 22
+INFO:root:greedy 19
+INFO:root:CASE: 0.500000, 2.000000, 0.050000
+INFO:root:min_fit 74, mean_fit 86
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 0.020000
+INFO:root:min_fit 75, mean_fit 164
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 0.010000
+INFO:root:min_fit 75, mean_fit 157
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.050000
+INFO:root:min_fit 72, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.020000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.010000
+INFO:root:min_fit 74, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 0.050000
+INFO:root:min_fit 72, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 0.020000
+INFO:root:min_fit 72, mean_fit 77
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 0.010000
+INFO:root:min_fit 73, mean_fit 85
+INFO:root:#########
+INFO:root:greedy 19
+INFO:root:greedy 26
+INFO:root:greedy 21
+INFO:root:CASE: 0.800000, 2.000000, 0.100000
+INFO:root:min_fit 71, mean_fit 81
+INFO:root:#########
+INFO:root:greedy 20
+INFO:root:greedy 61
+INFO:root:CASE: 0.800000, 1.000000, 0.100000
+INFO:root:min_fit 73, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.000000, 0.300000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.000000, 0.500000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.100000
+INFO:root:min_fit 73, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.300000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.500000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 3.000000, 0.100000
+INFO:root:min_fit 73, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 3.000000, 0.300000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 3.000000, 0.500000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:greedy 56
+INFO:root:greedy 61
+INFO:root:greedy 56
+INFO:root:greedy 60
+INFO:root:greedy 56
+INFO:root:CASE: 0.800000, 1.000000, 0.100000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.000000, 0.300000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 1.000000, 0.500000
+INFO:root:min_fit 72, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.100000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.300000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 2.000000, 0.500000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 3.000000, 0.100000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 3.000000, 0.300000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 0.800000, 3.000000, 0.500000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:greedy 59
+INFO:root:CASE: 0.500000, 0.100000, 0.100000
+INFO:root:min_fit 73, mean_fit 74
+INFO:root:#########
+INFO:root:greedy 57
+INFO:root:CASE: 0.500000, 2.000000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 0.500000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 1.000000
+INFO:root:min_fit 69, mean_fit 71
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 1.500000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 2.000000, 2.000000
+INFO:root:min_fit 70, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 0.500000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 1.000000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 1.500000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.500000, 2.000000
+INFO:root:min_fit 69, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 0.500000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 1.000000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 1.500000
+INFO:root:min_fit 70, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.000000, 2.000000
+INFO:root:min_fit 69, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 0.500000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 1.000000
+INFO:root:min_fit 70, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 1.500000
+INFO:root:min_fit 69, mean_fit 71
+INFO:root:#########
+INFO:root:CASE: 0.500000, 1.500000, 2.000000
+INFO:root:min_fit 70, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.100000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.100000, 0.500000
+INFO:root:min_fit 72, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.100000, 1.000000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.100000, 1.500000
+INFO:root:min_fit 70, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 0.500000, 0.100000, 2.000000
+INFO:root:min_fit 70, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 0.100000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 0.500000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 1.000000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 1.500000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 2.000000, 2.000000
+INFO:root:min_fit 71, mean_fit 74
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 0.500000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 1.000000
+INFO:root:min_fit 70, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 1.500000
+INFO:root:min_fit 71, mean_fit 75
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.500000, 2.000000
+INFO:root:min_fit 72, mean_fit 76
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 0.500000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 1.000000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 1.500000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.000000, 2.000000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.500000, 0.100000
+INFO:root:min_fit 71, mean_fit 72
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.500000, 0.500000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.500000, 1.000000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.500000, 1.500000
+INFO:root:min_fit 71, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 1.500000, 2.000000
+INFO:root:min_fit 70, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 0.100000
+INFO:root:min_fit 72, mean_fit 73
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 0.500000
+INFO:root:min_fit 71, mean_fit 77
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 1.000000
+INFO:root:min_fit 73, mean_fit 78
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 1.500000
+INFO:root:min_fit 72, mean_fit 81
+INFO:root:#########
+INFO:root:CASE: 1.000000, 0.100000, 2.000000
+INFO:root:min_fit 72, mean_fit 88
+INFO:root:#########
+INFO:root:greedy 33
+INFO:root:greedy 31
+INFO:root:greedy 33
+INFO:root:greedy 34
+INFO:root:greedy 30
+INFO:root:greedy 33
+INFO:root:greedy 33
+INFO:root:greedy 33
+INFO:root:greedy 35
+INFO:root:greedy 33
+INFO:root:greedy 36
+INFO:root:greedy 34
+INFO:root:greedy 36
+INFO:root:greedy 37
+INFO:root:greedy 34
+INFO:root:greedy 33
+INFO:root:greedy 34
+INFO:root:greedy 34
+INFO:root:greedy 37
+INFO:root:greedy 33
+INFO:root:greedy 36
+INFO:root:greedy 31
+INFO:root:greedy 34
+INFO:root:greedy 33
+INFO:root:greedy 36
+INFO:root:greedy 38
+INFO:root:greedy 32
+INFO:root:greedy 35
+INFO:root:greedy 34
+INFO:matplotlib.backends._backend_tk:Could not load matplotlib icon: can't use "pyimage20" as iconphoto: not a photo image
+INFO:matplotlib.backends._backend_tk:Could not load matplotlib icon: can't use "pyimage20" as iconphoto: not a photo image
+INFO:matplotlib.backends._backend_tk:Could not load matplotlib icon: can't use "pyimage20" as iconphoto: not a photo image
+INFO:matplotlib.backends._backend_tk:Could not load matplotlib icon: can't use "pyimage20" as iconphoto: not a photo image

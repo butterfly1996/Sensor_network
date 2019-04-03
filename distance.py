@@ -1,5 +1,5 @@
 import numpy as np
-from sensors_field import Sensor
+#from sensors_field import Sensor
 def arctan(y, x):
     if x >= 0:
         return np.arctan(y/x)
@@ -219,7 +219,10 @@ def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
     #4: intersection
     dx, dy = center2[0] - center1[0], center2[1] - center1[1]
     d = np.sqrt(dx * dx + dy * dy)
-    if d < 2*r:
+    if d == 0:
+        # actually is other case
+        res.append([None, None, 0])
+    elif 0 < d < 2*r:
         a = d / 2
         h = np.sqrt(r**2 - a**2)
         xm = center1[0] + a * dx / d
@@ -228,9 +231,9 @@ def closesDistanceBetweenArcs(center1, center2, beta1, beta2, r, alpha):
         xs2 = xm - h * dy / d
         ys1 = ym - h * dx / d
         ys2 = ym + h * dx / d
-        if is_between_angles(arctan((ys1-center1[1]),(xs1-center1[0])), beta1, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(arctan((ys1-center2[1]),(xs1-center2[0])), beta2, angle(beta2-alpha), angle(beta2+alpha)):
+        if is_between_angles(np.arctan2((ys1-center1[1]),(xs1-center1[0])), beta1, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(np.arctan2((ys1-center2[1]),(xs1-center2[0])), beta2, angle(beta2-alpha), angle(beta2+alpha)):
             res.append([np.array([xs1, ys1]), np.array([xs1, ys1]), 0])
-        if is_between_angles(arctan((ys2-center1[1]),(xs2-center1[0])), beta1, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(arctan((ys2-center2[1]),(xs2-center2[0])), beta2, angle(beta2-alpha), angle(beta2+alpha)):
+        if is_between_angles(np.arctan2((ys2-center1[1]),(xs2-center1[0])), beta1, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(np.arctan2((ys2-center2[1]),(xs2-center2[0])), beta2, angle(beta2-alpha), angle(beta2+alpha)):
             res.append([np.array([xs2, ys2]), np.array([xs2, ys2]), 0])
     res = np.array(res)
     return res[np.argmin(res[:, 2])]
@@ -331,7 +334,13 @@ def intersectArcs(center1, center2, beta1, beta2, r, alpha):
     #4: intersection
     dx, dy = center2[0] - center1[0], center2[1] - center1[1]
     d = np.sqrt(dx * dx + dy * dy)
-    if d <= 2*r:
+    if d == 0:
+        if is_between_angles(angle(beta2-alpha), beta1, angle(beta1-alpha), angle(beta1+alpha)):
+            return True
+        if is_between_angles(angle(beta2+alpha), beta1, angle(beta1-alpha), angle(beta1+alpha)):
+            return True
+        return False
+    elif 0 < d <= 2*r:
         a = d / 2
         h = np.sqrt(r**2 - a**2)
         xm = center1[0] + a * dx / d
@@ -340,9 +349,9 @@ def intersectArcs(center1, center2, beta1, beta2, r, alpha):
         xs2 = xm - h * dy / d
         ys1 = ym - h * dx / d
         ys2 = ym + h * dx / d
-        if is_between_angles(arctan((ys1-center1[1]),(xs1-center1[0])), beta1, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(arctan((ys1-center2[1]),(xs1-center2[0])), beta2, angle(beta2-alpha), angle(beta2+alpha)):
+        if is_between_angles(np.arctan2((ys1-center1[1]),(xs1-center1[0])), beta1, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(np.arctan2((ys1-center2[1]),(xs1-center2[0])), beta2, angle(beta2-alpha), angle(beta2+alpha)):
             return True
-        if is_between_angles(arctan((ys2-center1[1]),(xs2-center1[0])), beta1, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(arctan((ys2-center2[1]),(xs2-center2[0])), beta2, angle(beta2-alpha), angle(beta2+alpha)):
+        if is_between_angles(np.arctan2((ys2-center1[1]),(xs2-center1[0])), beta1, angle(beta1-alpha), angle(beta1+alpha)) and is_between_angles(np.arctan2((ys2-center2[1]),(xs2-center2[0])), beta2, angle(beta2-alpha), angle(beta2+alpha)):
             return True
 
     return False

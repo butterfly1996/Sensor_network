@@ -1,26 +1,44 @@
-#!/usr/bin/env python3
-import itertools
-import multiprocessing
-import defs
+#from pyswarm import pso
+from psopy import minimize
+import numpy as np
+from sensors_field import Sensor
+from sensors_field import WBG
 
-def func(params):
-    a = params[0]
-    b = params[1]
-    #print (a*b*c*d)
-    return a*b
+N = 80
+K = 3
+def banana(chrome):
+    print ("call")
+    wbg.update_views(chrome)
+    result = wbg.loss()
+    if False: #verbose:
+        print ('\nfitness: %d'%result)
+    return result
 
-if __name__ == '__main__':
-    #Generate values for each parameter
-    a = range(1,5)
-    b = range(1,5)
+import  distance
+global distance
+wbg = WBG(lenght=500, height=100, mode='strong')
+# sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
+#s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
+#s2 = Sensor(8, 3, 5*np.pi / 6, 2, np.pi / 4)
+wbg.create_sensors_randomly(N, r=50, alpha=np.pi/3)
+wbg.build_disBG()
+wbg.setup_loss()
+print (wbg.dis_matrix)
 
-    #Generate a list of tuples where each tuple is a combination of parameters.
-    #The list will contain all possible combinations of parameters.
-    paramlist = list(itertools.product(a,b))
+wbg.field_show()
+lb = [-np.pi]*(N)
+ub = [np.pi]*(N)
 
-    #Generate processes equal to the number of cores
-    pool = multiprocessing.Pool(4)
+x0 = np.random.uniform(-np.pi, np.pi, (30,N))
 
-    #Distribute the parameter sets evenly across the cores
-    res  = pool.map(func,paramlist)
-    print (res[:10])
+#xopt, fopt = pso(banana, lb, ub, swarmsize=50, maxiter=10, debug=True)
+import time
+start = time.time()
+res = minimize(banana, x0, options={'max_iter':50, 'stable_iter':10, 'verbose':True})
+print ("time: ", (time.time()-start))
+xopt, fopt = res.x, res.fun
+print (xopt)
+print (fopt)
+wbg.update_views(xopt)
+wbg.field_show()
+

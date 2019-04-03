@@ -5,7 +5,7 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
-from pso_ga import *
+from pso import *
 import codecs
 import logging
 from circle_util import Geometry
@@ -168,6 +168,8 @@ class Sensor():
             phi = atan2(s2.yi-self.yi, s2.xi-self.xi)
             self.add_virtual_node(angle(phi-self.alpha))
             self.add_virtual_node(angle(phi+self.alpha))
+    def update_view(self, new_beta):
+        self.__init__(self.xi, self.yi, new_beta, self.r, self.alpha)
 
 class Sensors_field():
     def __init__(self, lenght, height):
@@ -192,7 +194,7 @@ class Sensors_field():
         for i in range(0, num_sensor):
             sensor = Sensor(xi=random.uniform(0, self.L), yi = random.uniform(0, self.H), betai= random.uniform(0, 360), r=r, alpha=alpha)
             self.sensors_list.append(sensor)
-    def field_show(self, virtual_node=False):
+    def field_show(self, virtual_node=False, filename=None):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         plt.subplot()
@@ -237,9 +239,12 @@ class Sensors_field():
         y = [p[1] for p in self.targets]
         plt.scatter(x, y, color='green')
 
-        plt.legend()  # <--- here
-        plt.show()
-        pass
+        #plt.legend()  # <--- here
+        
+        if filename:
+            plt.savefig(filename)
+        else:
+            plt.show()
     def add_sensor(self, sensor):
         self.sensors_list.append(sensor)
     def add_dis_2_points(self, points):
@@ -275,6 +280,22 @@ class WBG(Sensors_field):
         if mode not in ['weak', 'strong']:
             raise ValueError
         self.mode = mode
+    def build_disBG(self):
+        ## ma tran ke
+        ## index 0 la s
+        ## index n+1 la t
+        ## tu 1 den n la chi so cua cac sensor
+        self.dis_matrix = np.full((len(self.sensors_list) + 2, len(self.sensors_list) + 2), np.inf)
+        for i, si in enumerate([self.s] + self.sensors_list + [self.t]):
+            for j, sj in enumerate([self.s] + self.sensors_list + [self.t]):
+                if i < j:
+                    if i == 0 and j == len(self.sensors_list) + 1:
+                        continue
+                    self.dis_matrix[i][j] = self.w(si, sj, normalize=False)
+                elif i == j:
+                    self.dis_matrix[i][j] = 0
+                else:
+                    self.dis_matrix[i][j] = self.dis_matrix[j][i]
     def build_WBG(self):
         ## ma tran ke
         ## index 0 la s
@@ -314,18 +335,21 @@ class WBG(Sensors_field):
             return 0
         else:
             return distance.minimum__sectors_distance(vi, vj)[2]
-    def w(self, vi, vj):# weight
+    def w(self, vi, vj, normalize=True):# weight
         try:
             lr = vi.lr
         except:
             lr = vj.lr
-        if self.mode == 'weak':
+        func = np.ceil
 
-            return np.ceil(self.dw(vi, vj)/lr)
+        if not normalize:
+            lr = 1.0
+            func = lambda x: x
+        
+        if self.mode == 'weak':
+            return func(self.dw(vi, vj)/lr)
         else:
-            # print("***")
-            # print(self.ds(vi, vj)/lr)
-            return np.ceil(self.ds(vi, vj)/lr)
+            return func(self.ds(vi, vj)/lr)
     def show_matrix(self):
         print(self.adj_matrix)
     def dijkstra(self):
@@ -478,6 +502,51 @@ class WBG(Sensors_field):
 
     def add_population(self, num_particles, num_barriers, omega, c1, c2):
         self.population = Population(self, num_particles, num_barriers, omega, c1, c2)
+    def update_views(self, new_views):
+        for i in range(len(self.sensors_list)):
+            self.sensors_list[i].update_view(new_views[i])
+        self.build_disBG()
+
+    def setup_loss(self):
+        self.nei_ids = [[]]*(len(self.sensors_list)+2)
+        for j in range(len(self.sensors_list)):
+            v = self.sensors_list[j]
+            if v.xi <= v.r:
+                self.nei_ids[0].append(j+1)
+        for i in range(len(self.sensors_list)):
+            u = self.sensors_list[i]
+            if u.xi >= self.L-u.r:
+                self.nei_ids[-1].append(i+1)
+        for i in range(len(self.sensors_list)):
+            u = self.sensors_list[i]
+            for j in range(len(self.sensors_list)):
+                v = self.sensors_list[j]
+                if len(geom.circle_intersection((u.xi,u.yi,u.r),(v.xi,v.yi,v.r)))>0 and i!=j:
+                    self.nei_ids[i+1].append(j+1)
+    def loss(self):
+        res = 0.0
+        
+        for j in self.nei_ids[0]:
+            v = self.sensors_list[j-1]
+            res += 2*self.dis_matrix[0,j]
+            res -= v.xR
+        for i in self.nei_ids[-1]:
+            u = self.sensors_list[i-1]
+            res += 2*self.dis_matrix[i,-1]
+            res -= (self.L-u.xL)
+
+        for i in range(len(self.sensors_list)):
+            u = self.sensors_list[i]
+            if len(self.nei_ids[i+1]) >= 2:
+                nei_dis = [self.dis_matrix[i+1, ni] for ni in self.nei_ids[i+1]]
+                argsort = np.argsort(nei_dis)
+                sorted_nei_ids = np.array(self.nei_ids[i+1])[argsort]
+                res += 2*nei_dis[argsort[1]]
+                res -= max(u.xR, self.sensors_list[sorted_nei_ids[0]-1].xR)-min(u.xL, self.sensors_list[sorted_nei_ids[0]-1].xL) 
+                res -= max(u.xR, self.sensors_list[sorted_nei_ids[1]-1].xR)-min(u.xL, self.sensors_list[sorted_nei_ids[1]-1].xL) 
+            if len(self.nei_ids[i+1]) == 1:
+                res -= 2*self.dis_matrix[i+1, self.nei_ids[i+1][0]]
+        return res
 
 
 class DBG(WBG):
@@ -577,22 +646,26 @@ class DBG(WBG):
 
 
 if __name__ == '__main__':
-    for n in np.arange(40,90,10):
+    '''
+    for n in [40]:
         rate = 0.0
-        for simulation in range(20):
-            print ('sim %d'%simulation)
-            dbg = DBG(lenght=500, height=100)
-            dbg.create_sensors_randomly(num_sensor=n, r=50, alpha=np.pi/6)
+        for simulation in range(1):
+            wbg = WBG(lenght=500, height=100)
+            wbg.create_sensors_randomly(num_sensor=n, r=10, alpha=np.pi/6)
             #dbg.add_sensor(Sensor(4,5,0,2,np.pi/6))
             #dbg.add_sensor(Sensor(5,3,-np.pi/2,2,np.pi/6))
-            dbg.field_show()
-            #dbg.build_WBG()
-            print ('build vir')
-            dbg.build_virtual_nodes()
-            print ('build dbg')
-            dbg.build_dbg()
-            #dbg.show_matrix()            
-            rate += dbg.dfs(0, [], np.sum([len(s.virtual_nodes) for s in dbg.sensors_list]) + 1)
-            print (rate)
-        rate/=20.0
-        print ("rate after %d: %f"%(n, rate))
+            wbg.build_WBG()
+            wbg.field_show(filename='before.jpg')
+            wbg.update_views([0]*len(wbg.sensors_list))
+            wbg.field_show(filename='after.jpg')
+    '''
+    import time
+    wbg = WBG(lenght=500, height=100, mode='strong')
+    wbg.create_sensors_randomly(num_sensor=50, r=50, alpha=np.pi/6)
+    wbg.build_disBG()
+    wbg.setup_loss()
+    wbg.field_show('before.jpg')
+    wbg.add_population(num_particles=50, num_barriers=1, omega=0.8, c1=2, c2=1)
+
+    wbg.population.evolve(10)
+    wbg.field_show()

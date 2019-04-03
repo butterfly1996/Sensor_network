@@ -1,6 +1,7 @@
 import numpy as np
 import copy
 from scipy import stats
+import time
 
 class Population():
     def __init__(self, wbg, num_particles, K, omega, c1, c2):
@@ -16,8 +17,8 @@ class Population():
     def initialize(self):
         for i in range(len(self.particles)):
             self.particles[i].initialize()
-        for i in range(len(self.particles)):
-            self.particles[i].compute_density(self.num_bins)
+        # for i in range(len(self.particles)):
+        #     self.particles[i].compute_density(self.num_bins)
         self.best_g = self.particles[np.argmin([particle.fitness() for particle in self.particles])].chrome.copy()
         self.best_fit = np.min([particle.fitness() for particle in self.particles])
     def rollete(self, id_list, prob_list, num_choices):
@@ -41,44 +42,13 @@ class Population():
             self.particles[i].compute_density(self.num_bins)
     def update(self):
         for i in range(len(self.particles)):
-            if i in self.parents: # mutation after crossover
-                self.particles[i].update(mutation=True)
-            else:
-                self.particles[i].update()
-        for i in range(len(self.particles)):
-            self.particles[i].compute_density(self.num_bins)
-        self.g_index = np.argmin([particle.fitness() for particle in self.particles])
+            self.particles[i].update()
         if np.min([particle.fitness() for particle in self.particles]) < self.best_fit:
             self.best_g = self.particles[np.argmin([particle.fitness() for particle in self.particles])].chrome.copy()
             self.best_fit = np.min([particle.fitness() for particle in self.particles])
-
-        # ####
-        # if np.random.uniform() < 1.0/len(self.particles[0].chrome):
-        #     ### apply mutation to gbest
-        #     temp_phi = self.particles[self.g_index].phi*np.exp(1.0/np.sqrt(2*self.num_particles)*np.random.normal()+1.0/np.sqrt(2*np.sqrt(self.num_particles))*np.random.normal(size=len(self.particles[0].chrome)))
-        #     self.particles[self.g_index].chrome += temp_phi*stats.beta.rvs(0.5,0.5,size=len(self.particles[0].chrome))
-
-        #     self.particles[self.g_index].compute_fitness()
-        #     self.particles[self.g_index].compute_affinity()
-
-        #     if self.particles[self.g_index].fitness()<self.particles[self.g_index].best_fit:
-        #         self.particles[self.g_index].best_p = self.particles[self.g_index].chrome.copy()
-        #         self.particles[self.g_index].best_fit = self.particles[self.g_index].fitness()
-        #         if self.particles[self.g_index].best_fit < self.best_fit:
-        #             self.best_g = self.particles[self.g_index].chrome.copy()
-        #             self.best_fit = self.particles[self.g_index].fitness()
-        # ####
-
-        ####
-        for i in range(len(self.particles)):
-            if np.random.uniform() < 0.5:
-                self.particles[i].chrome += np.random.normal(0,10,size=len(self.particles[0].chrome))
-                self.particles[i].compute_fitness()
-                self.particles[i].compute_affinity()
-        ####
     def evolve(self, MAX_ITER=500):
         self.initialize()
-        print('Iter 0, fitness=%d, g='%(self.best_fit))
+        print('START, fitness=%d'%(self.best_fit))
         for iter in range(MAX_ITER):
             #self.show()
             #print('clone...')
@@ -86,9 +56,11 @@ class Population():
             #print('cross over...')
             #self.cross_over()
             #print('update...')
+            start = time.time()
             self.update()
-            if (iter+1)%500==0:
-                print('Iter %d, fitness=%d, p='%(iter, self.best_fit)+str(self.particles[np.argmin([particle.fitness() for particle in self.particles])]._paths))#+str(self.best_g))
+            aTime = time.time()-start
+            if (iter+1)%1==0:
+                print('Iter %d, fitness=%d, time'%(iter, self.best_fit), aTime)
         return self.best_fit
 
 
@@ -106,12 +78,12 @@ class Particle():
         self.K = K
         self.omega = omega
         self.wbg = wbg
-        self.chrome = np.random.randint(1, 100, size=(self.N+1+self.K,)).astype(float)
-        self.phi = np.random.randint(1, 100, size=(self.N+1+self.K,)).astype(float)
-        self.rand1 = self.gen_rand()
-        self.rand2 = self.gen_rand()
-        #self.velocity = np.zeros_like(self.chrome).astype(float)
-        self.velocity = np.random.uniform(-100, 100, size=(self.N+1+self.K,)).astype(float)
+        self.chrome = np.random.randint(-np.pi, np.pi, size=(self.N,)).astype(float)
+        #self.phi = np.random.randint(1, 100, size=(self.N,)).astype(float)
+        # self.rand1 = self.gen_rand()
+        # self.rand2 = self.gen_rand()
+        self.velocity = np.zeros_like(self.chrome).astype(float)
+        #self.velocity = np.random.uniform(-100, 100, size=(self.N+1+self.K,)).astype(float)
         self.c1 = self.population.c1
         self.c2 = self.population.c2
     def __str__(self):
@@ -119,7 +91,7 @@ class Particle():
     def initialize(self):
         # TODO: refactor setter
         self.compute_fitness()
-        self.compute_affinity()
+        # self.compute_affinity()
         # self.compute_density(self.population.num_bins)
 
         self.best_p = self.chrome.copy()
@@ -130,30 +102,8 @@ class Particle():
     def get_population(self):
         return self.population
     def compute_fitness(self, verbose=False):
-        mask = np.ones_like(self.chrome).astype(float) # mask values, 1 if vertex can be selected, else -np.inf
-        mask[0] = -np.inf # s 
-        paths = []
-        result = 0
-        for k in range(self.K):
-            path = [0]
-            next_v = np.argmax([ch if m == 1 else m for m, ch in zip(mask, self.chrome)])
-            if mask[next_v]==-np.inf: # invalid
-                path.append(self.N+1) # direct barrier
-                paths.append(path)
-                continue
-            while next_v <= self.N:
-                mask[next_v] = -np.inf
-                path.append(next_v)
-                next_v = np.argmax([ch if m == 1 else m for m, ch in zip(mask, self.chrome)]) # if negative? => BUG
-            mask[next_v] = -np.inf
-            path.append(self.N+1)
-            paths.append(path)
-        #print (paths)
-        result = np.sum([self.wbg.length(path) for path in paths])
-        if verbose:
-            print (paths)
-            print ('\nfitness: %d'%result)
-        self._paths = paths
+        self.wbg.update_views(self.chrome)
+        result = self.wbg.loss()
         self._fitness = result
     def fitness(self):
         return self._fitness
@@ -210,14 +160,8 @@ class Particle():
             self.rand2 = np.random.rand(1)[0]
         self.velocity = self.omega*self.velocity + self.c1*self.rand1*(self.best_p-self.chrome)+self.c2*self.rand2*(self.population.best_g-self.chrome)
         self.chrome += self.velocity # TODO: refactor setter
-        self.chrome = np.clip(self.chrome, 1.0, 100.0)
-        # DEBUG:
-        #print("debug: ")
-        #print(self.chrome)
-
+        # self.chrome = np.clip(self.chrome, 1.0, 100.0)
         self.compute_fitness()
-        self.compute_affinity()
-        # self.compute_density(self.population.num_bins)
         if self.fitness() < self.best_fit:
             self.best_p = self.chrome.copy()
             self.best_fit = self.fitness()
