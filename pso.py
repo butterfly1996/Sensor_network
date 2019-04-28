@@ -61,7 +61,7 @@ class Population():
             aTime = time.time()-start
             if (iter+1)%1==0:
                 print('Iter %d, fitness=%d, time'%(iter, self.best_fit), aTime)
-        return self.best_fit
+        return self.best_fit, self.best_g
 
 
 
