@@ -1,7 +1,6 @@
 from scipy.optimize import linear_sum_assignment
+import copy
 from matplotlib import pyplot as plt
-import numpy as np
-from matplotlib.patches import Wedge
 import random
 from matplotlib import collections as mc
 import matplotlib.patches as patches
@@ -9,7 +8,6 @@ from pso_ga import *
 # from pso import *
 import codecs
 import logging
-from math import atan2
 #from pyswarm import pso
 import sys
 np.set_printoptions(threshold=sys.maxsize)
@@ -17,7 +15,7 @@ np.random.seed(1234)
 logging.basicConfig(filename='tunning.log',level=logging.INFO)
 #geom = Geometry()
 
-# import distance
+from src.ultis import distance
 def angle(value):
     # chuan hoa gia tri goc tu 0 den 2pi
     return (value) % (2*np.pi)
@@ -188,11 +186,13 @@ class Sensors_field:
         self.dynamics = []
         self.sensors_list = []
         self.mobile_sensors_list = []
+        self.destination = -1
 
     def create_sensors_randomly(self, num_sensor=50, r=3, alpha=60):
         for i in range(0, num_sensor):
             sensor = Sensor(xi=np.random.uniform(0, self.L), yi=np.random.uniform(0, self.H), betai= np.random.uniform(0, 2*np.pi), r=r, alpha=alpha)
             self.sensors_list.append(sensor)
+            self.destination = num_sensor+1
 
     def field_show(self):
         fig = plt.figure()
@@ -295,7 +295,9 @@ class WBG(Sensors_field):
                     self.adj_matrix[i][j] = 0
                 else:
                     self.adj_matrix[i][j] = self.adj_matrix[j][i]
-        self.o_adj_matrix = self.adj_matrix.copy()
+        # self.o_adj_matrix = self.adj_matrix.copy()
+        self.o_adj_matrix = copy.deepcopy(self.adj_matrix)
+
 
     def dw(self, vi, vj):# weak distance
         if vi == self.s:
@@ -335,7 +337,8 @@ class WBG(Sensors_field):
             return np.ceil(self.ds(vi, vj, code1, code2)/lr)
 
     def show_matrix(self):
-        print(self.adj_matrix)
+        print(self.o_adj_matrix)
+        # print(self.adj_matrix)
 
     def dijkstra(self):
         dist = [np.inf]*(len(self.sensors_list)+2)
@@ -364,11 +367,12 @@ class WBG(Sensors_field):
 
         j = len(self.sensors_list)+1
         p = [j]
-        while prev[j] != None:
+        while prev[j] is not None:
             p.append(prev[j])
             j = prev[j]
         p = list(reversed(p))
         return p
+
     def length(self, p, pso=False):
         res = 0
         if not pso:
@@ -376,7 +380,8 @@ class WBG(Sensors_field):
                 lr = self.sensors_list[0].lr
                 return np.ceil(self.L/lr)
         for i in range(len(p) - 1):
-            res += self.o_adj_matrix[p[i]][p[i + 1]]
+            # print(p[i])
+            res += self.o_adj_matrix[int(p[i])][int(p[i + 1])]
         return res
 
     def min_num_mobile_greedy(self, k):
@@ -384,12 +389,12 @@ class WBG(Sensors_field):
         q=0
         while q<k:
             p = self.dijkstra()
-            if len(p)<2: ## empty path
+            if len(p) < 2: ## empty path
                 print('%')
                 break
             if self.length(p)<=np.ceil(self.L/self.sensors_list[0].lr):
                 Pk.append(p)
-                q+=1
+                q += 1
                 for i in range(1, len(p)-1):
                     self.adj_matrix[p[i], :] = np.inf
                     self.adj_matrix[:, p[i]] = np.inf
@@ -431,7 +436,7 @@ class WBG(Sensors_field):
 
     def calculate_target_location(self, s1, s2):
         if s1 not in [0, len(self.sensors_list)+1] and s2 not in [0, len(self.sensors_list)+1]:
-            pa, pb, d = distance.minimum__sectors_distance(self.sensors_list[s1-1], self.sensors_list[s2-1])
+            pa, pb, d = distance.minimum__sectors_distance(self.sensors_list[s1 - 1], self.sensors_list[s2 - 1])
         elif s1 == 0:
             xL, yL = self.sensors_list[s2 - 1].xL, self.sensors_list[s2 - 1].yL
             pa, pb, d = np.array([0, yL]), np.array([xL, yL]), xL
@@ -446,7 +451,7 @@ class WBG(Sensors_field):
             pa, pb, d = np.array([self.L, yR]), np.array([xR, yR]), self.L-xR
         if self.o_adj_matrix[s1, s2] > 0:
             dv = d/self.o_adj_matrix[s1, s2]
-            phi = distance.arctan(pb[1]-pa[1], pb[0]-pa[0])
+            phi = distance.arctan(pb[1] - pa[1], pb[0] - pa[0])
             alpha = self.sensors_list[0].alpha
             lr = self.sensors_list[0].lr
             r = self.sensors_list[0].r
@@ -458,7 +463,7 @@ class WBG(Sensors_field):
             elif lr == 2*r*np.sin(alpha) and 2*alpha<np.pi:
                 h = np.sqrt(r**2-(lr/2)**2)
                 l = np.sqrt(h**2+(dv/2)**2)
-                lamda = distance.arctan(2*h, dv)
+                lamda = distance.arctan(2 * h, dv)
                 for i in range(int(self.o_adj_matrix[s1, s2])):
                     res.append(np.array([pa[0]+i*dv*np.cos(phi)+l*np.cos(phi+lamda), pa[1]+i*dv*np.sin(phi)+l*np.sin(phi+lamda), angle(phi+3/2*np.pi)]))
             elif lr == 2*r and 2*alpha>np.pi:
@@ -493,7 +498,7 @@ class WBG(Sensors_field):
 
 
 if __name__ == '__main__':
-    import distance
+
     wbg = WBG(lenght=50, height=15, mode='strong')
     # sensor_field.create_sensors_randomly(num_sensor=sensor_field.n, r=3, alpha=60)
     #s1 = Sensor(3, 3, np.pi / 5, 2, np.pi / 4)
@@ -525,9 +530,9 @@ if __name__ == '__main__':
     #wbg.population.clone(5)
     #wbg.population.show()
     #wbg.population.particles[0].fitness(verbose=True)
-    wbg.population.evolve(MAX_ITER=500)
+    # wbg.population.evolve(MAX_ITER=500)
 
-    Pk, Nm = wbg.min_num_mobile_greedy(3)
+    Pk, Nm = wbg.min_num_mobile_greedy(1)
     print("######################################################")
     print(Pk)
     print(Nm)
