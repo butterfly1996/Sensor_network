@@ -5,7 +5,6 @@ from matplotlib.patches import Wedge
 import random
 from matplotlib import collections  as mc
 import matplotlib.patches as patches
-from ga import *
 import codecs
 import logging
 from circle_util import Geometry
@@ -442,7 +441,7 @@ class WBG(Sensors_field):
                 lr = self.sensors_list[0].lr
                 return np.ceil(self.L / lr)
         for i in range(len(p) - 1):
-            print ('add', self.adj_matrix[p[i]][p[i + 1]])
+            # print ('add', self.adj_matrix[p[i]][p[i + 1]])
             res += self.adj_matrix[p[i]][p[i + 1]]
         return res
 
@@ -452,7 +451,7 @@ class WBG(Sensors_field):
         while q < k:
             p = self.dijkstra()
             if len(p) < 2:  ## empty path
-                print('%')
+                # print('%')
                 break
             if self.length(p) <= np.ceil(self.L / self.sensors_list[0].lr):
                 Pk.append(p)
@@ -687,8 +686,8 @@ class DBG(WBG):
 
         self.adj_matrix = np.full((num_virtuals, num_virtuals), np.inf)
 
-        print ('nvir %d' % num_virtuals)
-        print ('detail ', [len(s.virtual_nodes) for s in self.sensors_list])
+        # print ('nvir %d' % num_virtuals)
+        # print ('detail ', [len(s.virtual_nodes) for s in self.sensors_list])
 
         self.s.vid = self.s.id = 0
         self.t.vid = num_virtuals - 1
@@ -726,7 +725,7 @@ class DBG(WBG):
             ai += len(u.virtual_nodes)
 
         pool = multiprocessing.Pool(24)
-        print ('aaaa')
+        # print ('aaaa')
         num_inter = 0
         for i, u in enumerate(self.sensors_list):
             for j, v in enumerate(self.sensors_list):
@@ -741,14 +740,14 @@ class DBG(WBG):
                     pool.map(fill_mat, paramlist)
         pool.close()
         self.adj_matrix = misfit
-        print ('aaaa')
+        # print ('aaaa')
 
         '''
         for ii in ii_list:
             for jj in jj_list:
                 self.fill_mat([ii, jj])
         '''
-        print ("inter count %d" % num_inter)
+        # print ("inter count %d" % num_inter)
 
     def build_dbg2(self):
         pool = multiprocessing.Pool(1)
@@ -758,12 +757,12 @@ class DBG(WBG):
     def setup_graph_obj(self):
         self.g = nx.from_numpy_matrix(self.adj_matrix, create_using=nx.DiGraph)
         # correction
-        print ('zero length')
+        # print ('zero length')
         xs, ys = np.where(nx.adjacency_matrix(g).to_dense() == 0)
         for x, y in zip(xs, ys):
             g.add_weighted_edges_from([(x, y, 0)])
 
-        print ('remove')
+        # print ('remove')
         xs, ys = np.where(nx.adjacency_matrix(g).to_dense() == np.inf)
         for x, y in zip(xs, ys):
             g.remove_edge(x, y)
@@ -785,17 +784,17 @@ class DBG(WBG):
         return False
 
     def dfs2(self, s, t):
-        print ('remove')
+        # print ('remove')
         temp_adj = self.adj_matrix.copy()
         temp_adj[temp_adj == np.inf] = 0
-        print ('remove')
+        # print ('remove')
 
         g = Graph.Weighted_Adjacency(temp_adj.tolist(), ADJ_DIRECTED)
-        print ('zero length')
+        # print ('zero length')
         xs, ys = np.where(self.adj_matrix == 0)
         for x, y in zip(xs, ys):
             g.add_edge(x, y)
-        print ('zero length')
+        # print ('zero length')
 
         s = set(g.subcomponent(s, mode="out"))
         t = set(g.subcomponent(t, mode="in"))
@@ -803,17 +802,17 @@ class DBG(WBG):
 
     def max_flow(self):
         # correct Graph
-        print ('remove')
+        # print ('remove')
         temp_adj = self.adj_matrix.copy()
         temp_adj[temp_adj == np.inf] = 0
-        print ('remove')
+        # print ('remove')
 
         g = Graph.Weighted_Adjacency(temp_adj.tolist(), ADJ_DIRECTED)
-        print ('zero length')
+        # print ('zero length')
         xs, ys = np.where(self.adj_matrix == 0)
         for x, y in zip(xs, ys):
             g.add_edge(x, y)
-        print ('zero length')
+        # print ('zero length')
 
         # round 1
         s = 0
@@ -850,13 +849,24 @@ class DBG(WBG):
 
 
 if __name__ == '__main__':
-    for n in [40]:
+    for n in np.arange(10, 90, 10):
         rate = 0.0
-        NUM_SIM = 20
+
+        if n == 10:
+            NUM_SIM = 40
+        elif n == 20:
+            NUM_SIM = 60
+        elif n <= 40:
+            NUM_SIM = 30
+        elif n <= 70:
+            NUM_SIM = 20
+        else:
+            NUM_SIM = 10
+
         for simulation in range(NUM_SIM):
             start = time()
             dbg = DBG(lenght=500, height=100)
-            dbg.create_sensors_randomly(num_sensor=n, r=50, alpha=np.pi / 3)
+            dbg.create_sensors_randomly(num_sensor=n, r=50, alpha=np.pi / 6)
             # dbg.add_sensor(Sensor(4,5,0,2,np.pi/6))
             # dbg.add_sensor(Sensor(5,3,-np.pi/2,2,np.pi/6))
             # dbg.field_show()
@@ -872,19 +882,19 @@ if __name__ == '__main__':
             misfit = shared_array.reshape(dbg.num_virtuals, dbg.num_virtuals)
 
             dbg.build_dbg()
-            dbg.show_matrix()
+            # dbg.show_matrix()
 
-            '''
-            print ('count non-inf ', np.count_nonzero(~np.isinf(dbg.adj_matrix[1:-1, 1:-1])))
+            # print ('count non-inf ', np.count_nonzero(~np.isinf(dbg.adj_matrix[1:-1, 1:-1])))
             res = dbg.dfs2(0, dbg.adj_matrix.shape[0]-1)
-            print ('res ', res)
+            # print ('res ', res)
             rate += res
-            print ('time ', time()-start)
-            '''
+            # print ('time ', time()-start)
 
+            '''
             res = dbg.max_flow()
             print ('num k ', res)
             rate += res.value
             print ('time ', time() - start)
+            '''
         rate /= NUM_SIM
-        print (rate)
+        print ('rate n=%d : '%(n), rate)
