@@ -898,4 +898,4 @@ if __name__ == '__main__':
             '''
         rate /= NUM_SIM
         print ('rate n=%d : '%(n), rate)
-        logging.info('rate n=%d : '%(n), rate)
+        logging.info('rate n=%d: %f'%(n, rate))
