@@ -17,10 +17,10 @@ import networkx as nx
 import igraph
 from igraph import *
 from time import time
-
+import logging
 # from pyswarm import pso
 
-logging.basicConfig(filename='tunning.log', level=logging.INFO)
+logging.basicConfig(filename='log.txt', level=logging.INFO)
 geom = Geometry()
 
 np.random.seed(23)
@@ -898,3 +898,4 @@ if __name__ == '__main__':
             '''
         rate /= NUM_SIM
         print ('rate n=%d : '%(n), rate)
+        logging.info('rate n=%d : '%(n), rate)
