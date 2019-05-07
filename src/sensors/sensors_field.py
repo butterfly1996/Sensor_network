@@ -476,22 +476,24 @@ class WBG(Sensors_field):
     def mcbf(self, k, dynamic_sens): # k la so barierr, dynamic_sens list cac sensor dong duoc trien khai
         tau = len(dynamic_sens)
         Pk, Nm = self.min_num_mobile_greedy(k)
-        print ("Nm %d"%Nm)
-        locs = []
+        print("Nm %d" %Nm)
+        target_locations = []
         for path in Pk:
             print(path)
             for i in range(len(path)-1):
-                locs.extend(self.calculate_target_location(path[i], path[i+1]))
-        if tau < len(locs):
+                target_locations.extend(self.calculate_target_location(path[i], path[i+1]))
+        if tau < len(target_locations):
             return (None, None), np.inf
         d = np.zeros((tau, Nm))
         for i, dynamic_sen in enumerate(dynamic_sens):
-            for j, loc in enumerate(locs):
-                d[i,j] = np.sqrt((dynamic_sen.xi-loc[0])**2+(dynamic_sen.yi-loc[1])**2)
+            for j, loc in enumerate(target_locations):
+                d[i, j] = np.sqrt((dynamic_sen.xi-loc[0])**2+(dynamic_sen.yi-loc[1])**2)
         row_ind, col_ind = linear_sum_assignment(d)
         min_cost = d[row_ind, col_ind].sum()
-        return locs, (row_ind, col_ind), min_cost
-        # locs la vi tri cac target, (row_ind, col_ind) la ghep cap giua dynamic sensor den target, min_cost chi phi minimum
+        # target_locations la vi tri cac target, (row_ind, col_ind) la ghep cap giua dynamic sensor den target,
+        # min_cost chi phi minimum
+        return target_locations, (row_ind, col_ind), min_cost
+
 
     def add_population(self, num_particles, num_barriers, omega, c1, c2):
         self.population = Population(self, num_particles=num_particles, K=num_barriers)

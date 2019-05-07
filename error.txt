@@ -1,0 +1,13 @@
+D:\nam5\DO_AN\code\code\Sensor_network\pso.py:141: RuntimeWarning: invalid value encountered in long_scalars
+  return 1.0-self.density()/(np.sum([particle.density() for particle in self.population.particles]))
+Traceback (most recent call last):
+  File "D:/nam5/DO_AN/code/code/Sensor_network/sensors_field.py", line 433, in <module>
+    wbg.population.evolve()
+  File "D:\nam5\DO_AN\code\code\Sensor_network\pso.py", line 54, in evolve
+    self.clone(10)
+  File "D:\nam5\DO_AN\code\code\Sensor_network\pso.py", line 27, in clone
+    next_gen_ids = self.rollete(antibodies, prob_list=np.array(probs)/np.sum(probs), num_choices=len(argsort))
+  File "D:\nam5\DO_AN\code\code\Sensor_network\pso.py", line 20, in rollete
+    return np.random.choice(id_list, size=num_choices,p=prob_list)
+  File "mtrand.pyx", line 1144, in mtrand.RandomState.choice
+ValueError: probabilities contain NaN

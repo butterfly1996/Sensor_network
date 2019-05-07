@@ -1,5 +1,4 @@
 import numpy as np
-from sensors_field import Sensor
 
 
 def arctan(y, x):

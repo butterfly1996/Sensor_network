@@ -1,6 +1,4 @@
-from sensors_field import Sensor, Sensors_field
-import numpy as np
-import matplotlib.pyplot as plt
+from src.sensors.sensors_field import Sensors_field
 
 if __name__ == '__main__':
     sensor_field = Sensors_field(lenght=30, height=10, num_station=2, num_mobile=20)

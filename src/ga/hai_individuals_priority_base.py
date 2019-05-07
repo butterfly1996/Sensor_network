@@ -12,8 +12,7 @@ class Chromosome:
 		self.destination = num_sensors + 1
 		self.num_sensors = num_sensors
 		if x is None:
-			# self.x = np.random.uniform(0, K, (K, num_sensors+1))
-			self.x = np.array([np.arange(1, num_sensors+2) + np.random.uniform(-1, 1, num_sensors+1) for i in range(0, K)])
+			self.x = np.array([np.arange(1, num_sensors+2) for i in range(0, K)])
 			# self.x = np.array([np.arange(1, num_sensors+2) for i in range(0, K)])
 			for path in self.x:
 				np.random.shuffle(path)
@@ -22,66 +21,96 @@ class Chromosome:
 		else:
 			self.x = x
 
-	def cross_over_hai_position_base(self, chromosome, Pc=0.8):
-		# parent1 = self.x
-		parent1 = copy.deepcopy(self.x)
-		parent2 = copy.deepcopy(chromosome.x)
-		for i in range(0, self.num_sensors+1):
+	def cross_over_hai_position_base(self, chromosome, Pc=0.5):
+		# children1 = self.x
+		passed_gen1 = [set() for _ in range(0, self.K)]
+		passed_gen2 = [set() for _ in range(0, self.K)]
+		children1 = copy.deepcopy(self.x)
+		children2 = copy.deepcopy(chromosome.x)
+		for sensor_index in range(0, self.num_sensors+1):
 			rand1, rand2 = np.random.uniform(0, 1, 2) #* (i+self.num_sensors)/num_sensors
 			if rand1 < Pc:
-				# print(rand1, rand2)
-				if rand2 < Pc:
-					z = copy.deepcopy(parent1[:, i])
-					parent1[:, i] = copy.deepcopy(parent2[:, i])
-					parent2[:, i] = z
-				else:
-					parent1[:, i] = copy.deepcopy(parent2[:, i])
-			elif rand2 < Pc:
-				# print(rand1, rand2)
-				parent2[:, i] = copy.deepcopy(parent1[:, i])
-		return Chromosome(num_sensors=self.destination - 1, K=self.K, x=parent1), \
-		       Chromosome(num_sensors=self.destination - 1, K=self.K, x=parent2)
-
-	def cross_over_hai_priority_base(self, chromosome, Pc=0.6, P_skip=0.4):
-		# parent1 = self.x
-		parent1 = copy.deepcopy(self.x)
-		parent2 = chromosome.x
-		i1, i2 = 0, 0
-		while i1 < self.K and i2 < self.K:
-			rand_swap, rand_skip1, rand_skip2 = np.random.uniform(0, 1, 3) #* (i+self.num_sensors)/num_sensors
-			# print(rand1, rand2)
-
-			if rand_swap < Pc:
-				z = parent1[i1]
-				parent1[i1] = parent2[i2]
-				parent2[i2] = z
-				i1 += 1
-				i2 += 1
+				# pass gen to children1
+				for gen_index in range(0, self.K):
+					passed_gen1[gen_index].add(self.x[gen_index][sensor_index])
 			else:
-				if rand_skip1 < P_skip:
-					i1 += 1
-				if rand_skip2 < P_skip:
-					i2 += 1
-		return Chromosome(num_sensors=self.destination - 1, K=self.K, x=parent1), \
-		       Chromosome(num_sensors=self.destination - 1, K=self.K, x=parent2)
+				for gen_index in range(0, self.K):
+					children1[gen_index][sensor_index] = -1
+			if rand2 < Pc:
+				# pass gen to children2
+				for gen_index in range(0, self.K):
+					passed_gen2[gen_index].add(chromosome.x[gen_index][sensor_index])
+			else:
+				for gen_index in range(0, self.K):
+					children2[gen_index][sensor_index] = -1
+		# print("***")
+		# print(passed_gen1)
+		# print("***")
+		# print(passed_gen2)
+		for gen_index in range(0, self.K):
+			# complete children
+			index_children1, index_children2, index1_parent1, index1_parent2 = 0, 0, 0, 0
+			while index_children1 < self.num_sensors+1:
+				if children1[gen_index][index_children1] < 0:
+					while chromosome.x[gen_index][index1_parent2] in passed_gen1[gen_index]:
+						index1_parent2 += 1
+					children1[gen_index][index_children1] = chromosome.x[gen_index][index1_parent2]
+					index1_parent2 += 1
+				index_children1 += 1
+			while index_children2 < self.num_sensors+1:
+				if children2[gen_index][index_children2] < 0:
+					while self.x[gen_index][index1_parent1] in passed_gen2[gen_index]:
+						index1_parent1 += 1
+					children2[gen_index][index_children2] = self.x[gen_index][index1_parent1]
+					index1_parent1 += 1
+				index_children2 += 1
+		return Chromosome(num_sensors=self.destination - 1, K=self.K, x=children1), \
+		       Chromosome(num_sensors=self.destination - 1, K=self.K, x=children2)
+
+	# def cross_over_hai_priority_base(self, chromosome, Pc=0.6, P_skip=0.4):
+	# 	# parent1 = self.x
+	# 	parent1 = copy.deepcopy(self.x)
+	# 	parent2 = chromosome.x
+	# 	i1, i2 = 0, 0
+	# 	while i1 < self.K and i2 < self.K:
+	# 		rand_swap, rand_skip1, rand_skip2 = np.random.uniform(0, 1, 3) #* (i+self.num_sensors)/num_sensors
+	# 		# print(rand1, rand2)
+	#
+	# 		if rand_swap < Pc:
+	# 			z = parent1[i1]
+	# 			parent1[i1] = parent2[i2]
+	# 			parent2[i2] = z
+	# 			i1 += 1
+	# 			i2 += 1
+	# 		else:
+	# 			if rand_skip1 < P_skip:
+	# 				i1 += 1
+	# 			if rand_skip2 < P_skip:
+	# 				i2 += 1
+	# 	return Chromosome(num_sensors=self.destination - 1, K=self.K, x=parent1), \
+	# 	       Chromosome(num_sensors=self.destination - 1, K=self.K, x=parent2)
 
 	def local_mutation(self, include_destination=1):
 		# print("mutation:", self.x)
 		# rand1 = np.argmax(
 		# 	np.random.uniform(0, 1, self.num_sensors+include_destination)*self.x[0])
 		# rand2 = np.random.randint(0, self.num_sensors + include_destination)
-		np.random.shuffle(self.x)
-		for i in self.x:
-			rand1, rand2 = np.random.randint(0, self.num_sensors + include_destination, 2)
-			while self.x[i][rand1] < self.x[i][-1] and self.x[i][rand2] < self.x[i][-1]:
-				rand1, rand2 = np.random.randint(0, self.num_sensors + include_destination, 2)
+		# np.random.shuffle(self.x)
+		for i in range(0, self.K):
+			rand1, rand2 = np.random.randint(0, int(self.num_sensors*1.3), 2)
+			rand1, rand2 = min(rand1, self.num_sensors),min(rand2, self.num_sensors)
+			while self.x[i][min(rand1, self.num_sensors)] < self.x[i][-1] \
+					and self.x[i][min(rand2, self.num_sensors)] < self.x[i][-1]:
+				rand1, rand2 = np.random.randint(0, int(self.num_sensors * 1.3), 2)
+				rand1, rand2 = min(rand1, self.num_sensors), min(rand2, self.num_sensors)
+
 			# print(rand1, rand2)
 			# z = copy.deepcopy(self.x[:, rand1])
 			# self.x[:, rand1] = self.x[:, rand2]
 			# self.x[:, rand2] = z
-			z = copy.deepcopy(self.x[i, rand1])
-			self.x[i, rand1] = self.x[i, rand2]
-			self.x[i, rand2] = z
+			z = copy.deepcopy(self.x[i][rand1])
+			self.x[i][rand1] = self.x[i][rand2]
+			self.x[i][rand2] = z
 		return self.x
 
 	def convert_to_path(self):
@@ -112,13 +141,24 @@ if __name__ == '__main__':
 	##############################################################################################
 	test_chromosome1 = Chromosome(num_sensors=num_sensors, K=num_barrier, x=None)
 	test_chromosome2 = Chromosome(num_sensors=num_sensors, K=num_barrier, x=None)
-	# child1, child2 = test_chromosome1.cross_over_hai_position_base(test_chromosome2)
-	print("############################################################################")
+	print("F1 1")
 	print(test_chromosome1.x)
 	print("############################################################################")
-	test_chromosome1.local_mutation()
+	print("F1 2")
 	print(test_chromosome1.x)
 	print("############################################################################")
+	child1, child2 = test_chromosome1.cross_over_hai_position_base(test_chromosome2)
+	print("P1 1")
+	print(child1.x)
+	print("############################################################################")
+	print("P1 2")
+	print(child2.x)
+	print("############################################################################")
+	# print(test_chromosome1.x)
+	# print("############################################################################")
+	# test_chromosome1.local_mutation()
+	# print(test_chromosome1.x)
+	# print("############################################################################")
 	paths = test_chromosome1.convert_to_path()
 	print(paths)
 	# print("chromosome1: ", test_chromosome1.x)

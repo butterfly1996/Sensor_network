@@ -1,6 +1,7 @@
 import numpy as np
-from sensors_field import Sensor, Sensors_field
-import distance
+from src.sensors.sensors_field import Sensor, Sensors_field
+from src.ultis import distance
+
 
 def test(sen1, sen2):
     sens_field = Sensors_field(10, 10)

@@ -1,9 +1,5 @@
 import numpy as np
-from sympy.solvers import solve
-from sympy import Symbol
-from sensors_field import Sensor, Sensors_field
-import matplotlib.pyplot as plt
-import time
+from src.sensors.sensors_field import Sensor, Sensors_field
 from sympy.solvers import solve
 from sympy import Symbol
 import sympy
