@@ -218,9 +218,9 @@ class Sensors_field():
         self.sensors_list = []
         self.mobile_sensors_list = []
 
-    def create_sensors_randomly(self, num_sensor=100, r=3, alpha=60):
+    def create_sensors_randomly(self, num_sensor=100, r=3, alpha=np.pi/3):
         for i in range(0, num_sensor):
-            sensor = Sensor(xi=random.uniform(0, self.L), yi=random.uniform(0, self.H), betai=random.uniform(0, 360),
+            sensor = Sensor(xi=random.uniform(0, self.L), yi=random.uniform(0, self.H), betai=random.uniform(-np.pi, np.pi),
                             r=r, alpha=alpha)
             self.sensors_list.append(sensor)
 
@@ -686,7 +686,7 @@ class DBG(WBG):
 
         self.adj_matrix = np.full((num_virtuals, num_virtuals), np.inf)
 
-        # print ('nvir %d' % num_virtuals)
+        print ('nvir %d' % num_virtuals)
         # print ('detail ', [len(s.virtual_nodes) for s in self.sensors_list])
 
         self.s.vid = self.s.id = 0
@@ -721,7 +721,7 @@ class DBG(WBG):
             if u.xi >= self.L - u.r:
                 for ii, uu in enumerate(u.virtual_nodes):
                     if np.equal(super().ds(uu, self.t), 0):
-                        misfit[ai + ii][num_virtuals - 1] = self.rotated_angle(u, uu)
+                        misfit[ai + ii][num_virtuals - 1] = 0 #self.rotated_angle(u, uu)
             ai += len(u.virtual_nodes)
 
         pool = multiprocessing.Pool(24)
@@ -800,6 +800,26 @@ class DBG(WBG):
         t = set(g.subcomponent(t, mode="in"))
         return True if len(s.intersection(t)) > 0 else False
 
+    def dijkstra2(self, s, t):
+        # print ('remove')
+        temp_adj = self.adj_matrix.copy()
+        temp_adj[temp_adj == np.inf] = 0
+        # print ('remove')
+
+        g = Graph.Weighted_Adjacency(temp_adj.tolist(), ADJ_DIRECTED)
+        # print ('zero length')
+        xs, ys = np.where(self.adj_matrix == 0)
+        for x, y in zip(xs, ys):
+            g.add_edge(x, y)
+        # print ('zero length')
+
+        temp_w = g.es['weight']
+        for x, y in zip(xs, ys):
+            temp_w[g.get_eid(x, y)] = 0
+        g.es['weight'] = temp_w
+
+        return g.shortest_paths_dijkstra(s, t, 'weight')[0][0]
+
     def max_flow(self):
         # correct Graph
         # print ('remove')
@@ -817,85 +837,158 @@ class DBG(WBG):
         # round 1
         s = 0
         t = self.adj_matrix.shape[0] - 1
-        res1 = g.maxflow(s, t)
-        print ('res 1, ', res1.value)
+        # res1 = g.maxflow(s, t)
+        # print ('res 1, ', res1.value)
 
-        # round 2
-        g.es['weight'] = res1.flow  # set weight to flow value
-        g.delete_edges(np.where(np.array(g.es['weight']) == 0)[0].tolist())  # remove unnecessary edges
-        conflict_a = {}  # dict, map conflict actual to conflict virtuals
+        # round 1
+        # g.es['weight'] = res1.flow  # set weight to flow value
+        # g.delete_edges(np.where(np.array(g.es['weight']) == 0)[0].tolist())  # remove unnecessary edges
+        # conflict_a = {}  # dict, map conflict actual to conflict virtuals
+        # for v in range(g.vcount()):
+        #     if len([e for e in g.get_edgelist() if e[1] == v and e[1] != t]) > 1:  # in degree > 1 and not t
+        #         conflict_a.setdefault(self.vid_to_as[v].id, []).append(v)
         for v in range(g.vcount()):
-            if len([e for e in g.get_edgelist() if e[1] == v and e[1] != t]) > 1:  # in degree > 1 and not t
-                conflict_a.setdefault(self.vid_to_as[v].id, []).append(v)
-        for a, vs in conflict_a.items():
-            # set default virtual node for actual node
-            g.add_edges([vs[0], out] for out in [e[1] for e in g.get_edgelist() if e[0] == v] for v in vs[1:])  # out
-            g.add_edges([ind, vs[0]] for ind in [e[0] for e in g.get_edgelist() if e[1] == v] for v in vs[1:])  # in
-            g.delete_edges([g.get_eid(v, out) for out in [e[1] for e in g.get_edgelist() if e[0] == v] for v in
-                            vs[1:]])  # remove unnecessary edges
-            g.delete_edges([g.get_eid(ind, v) for ind in [e[0] for e in g.get_edgelist() if e[1] == v] for v in
-                            vs[1:]])  # remove unnecessary edges
-
             g.add_vertices(1)
-            v = vs[0]
             new_v = g.vcount() - 1  # split current v to v and new_v
             g.add_edge(v, new_v)  # inner edge
             g.add_edges(
                 [(new_v, out) for out in [e[1] for e in g.get_edgelist() if e[0] == v and e[1] != new_v]])  # new_v out
             g.delete_edges(
                 [g.get_eid(v, out) for out in [e[1] for e in g.get_edgelist() if e[0] == v and e[1] != new_v]])  # v out
-        res2 = g.maxflow(s, t)
-        return res2
+        res1 = g.maxflow(s, t)
+        print ('res 1, ', res1.value)
 
+        # round 2
+        g.es['weight'] = res1.flow  # set weight to flow value
+        g.delete_edges(np.where(np.array(g.es['weight']) == 0)[0].tolist())  # remove unnecessary edges
+        paths = int(res1.value)*[[]]
+        assert len(g.incident(s)) == res1.value, "failed assert"
+        for i, e in enumerate(g.incident(s)):
+            u = g.get_edgelist()[e][1]
+            paths[i].append(u)
+            while g.get_edgelist()[g.incident(u)[0]][1] != t:
+                u = g.get_edgelist()[g.incident(u)[0]][1]
+                paths[i].append(u)
+        def check_conflict(paths):
+            intersection = set().intersection(*[[self.vid_to_as[v].id for v in path if v < t] for path in paths])
+            return True if len(intersection) > 0 else False
+        def get_conflict_path_ids(paths, id):
+            path = paths[id]
+            ids = [True if len(set([self.vid_to_as[v].id for v in p if v<t]).intersection(set([self.vid_to_as[v].id for v in path if v<t]))) > 0 else False
+                 for p in paths]
+            ids = np.where(np.array(ids)==True)[0]
+            # for p in paths:
+            #     print ('all paths', [self.vid_to_as[v].id for v in p if v < t])
+            # print  ('current path', [self.vid_to_as[v].id for v in path if v < t])
+            # print  ('paths ', paths)
+            # print  ('ids ', ids.tolist())
+            # print  ('id ', id)
+
+            # ids.tolist().remove(id)
+
+            return ids
+        new_paths = []
+        while len(paths) > 0:
+            argmin = np.argmin([len(get_conflict_path_ids(paths, i)) for i in range(len(paths))])
+            new_paths.append(argmin)
+            cids = get_conflict_path_ids(paths, argmin)
+            for cid in sorted(cids,reverse=True):
+                del paths[cid]
+        return len(new_paths)
 
 if __name__ == '__main__':
-    for n in np.arange(10, 90, 10):
-        rate = 0.0
 
-        if n == 10:
-            NUM_SIM = 40
-        elif n == 20:
-            NUM_SIM = 60
-        elif n <= 40:
-            NUM_SIM = 30
-        elif n <= 70:
-            NUM_SIM = 20
-        else:
+    MODE_EXIST_BARRIER = 0
+    MODE_MIN_COST_BARRIER = 1
+    MODE_MAX_NUM_BARRIER = 2
+
+    mode = MODE_MIN_COST_BARRIER
+
+    if mode == MODE_EXIST_BARRIER:
+        for n in np.arange(10, 90, 10):
             NUM_SIM = 10
+            simulation = 0
 
-        for simulation in range(NUM_SIM):
-            start = time()
-            dbg = DBG(lenght=500, height=100)
-            dbg.create_sensors_randomly(num_sensor=n, r=50, alpha=np.pi / 6)
-            # dbg.add_sensor(Sensor(4,5,0,2,np.pi/6))
-            # dbg.add_sensor(Sensor(5,3,-np.pi/2,2,np.pi/6))
-            # dbg.field_show()
+            r = 50
+            rate = 0.0
+            while simulation < NUM_SIM:  # or count < 10:
+                simulation += 1
+                start = time()
 
-            # dbg.build_WBG()
-            # dbg.show_matrix()
-            # print ("before %d" % (dbg.length(dbg.dijkstra())))
+                dbg = DBG(lenght=500, height=100)
+                dbg.create_sensors_randomly(num_sensor=n, r=r, alpha=np.pi / 6)
+                dbg.build_virtual_nodes()
 
-            dbg.build_virtual_nodes()
+                shared_array_base = multiprocessing.Array(ctypes.c_double, [np.inf] * dbg.num_virtuals ** 2)
+                shared_array = np.ctypeslib.as_array(shared_array_base.get_obj())
+                misfit = shared_array.reshape(dbg.num_virtuals, dbg.num_virtuals)
+                dbg.build_dbg()
 
-            shared_array_base = multiprocessing.Array(ctypes.c_double, [np.inf] * dbg.num_virtuals ** 2)
-            shared_array = np.ctypeslib.as_array(shared_array_base.get_obj())
-            misfit = shared_array.reshape(dbg.num_virtuals, dbg.num_virtuals)
+                res = dbg.dfs2(0, dbg.adj_matrix.shape[0] - 1)
 
-            dbg.build_dbg()
-            # dbg.show_matrix()
+                print ('time ', time() - start, ', rate ', res)
+                rate += res
+            rate /= NUM_SIM
+            print ('rate n=%d : ' % (n), rate)
+            logging.info('rate n=%d: %f' % (n, rate))
+    elif mode == MODE_MIN_COST_BARRIER:
+        for r in np.arange(30, 90, 10):
+            NUM_SIM = 50
+            simulation = 0
+            count = 0
 
-            # print ('count non-inf ', np.count_nonzero(~np.isinf(dbg.adj_matrix[1:-1, 1:-1])))
-            res = dbg.dfs2(0, dbg.adj_matrix.shape[0]-1)
-            # print ('res ', res)
-            rate += res
-            # print ('time ', time()-start)
+            n = 40
+            rate = 0.0
+            while simulation < NUM_SIM or count < NUM_SIM:
+                count += 1
+                start = time()
 
-            '''
-            res = dbg.max_flow()
-            print ('num k ', res)
-            rate += res.value
-            print ('time ', time() - start)
-            '''
-        rate /= NUM_SIM
-        print ('rate n=%d : '%(n), rate)
-        logging.info('rate n=%d: %f'%(n, rate))
+                dbg = DBG(lenght=500, height=100)
+                dbg.create_sensors_randomly(num_sensor=n, r=r, alpha=np.pi / 6)
+                dbg.build_virtual_nodes()
+
+                shared_array_base = multiprocessing.Array(ctypes.c_double, [np.inf] * dbg.num_virtuals ** 2)
+                shared_array = np.ctypeslib.as_array(shared_array_base.get_obj())
+                misfit = shared_array.reshape(dbg.num_virtuals, dbg.num_virtuals)
+                dbg.build_dbg()
+
+                res = dbg.dijkstra2(0, dbg.adj_matrix.shape[0] - 1)
+                if res != np.inf:
+                    rate += res
+                    simulation += 1
+                    print (res)
+                else:
+                    print ('bugg')
+                    continue
+
+                print ('time ', time() - start, ', total angle ', res)
+            rate /= simulation
+            print ('total angle r=%d : ' % (r), rate)
+            logging.info('total angle r=%d: %f' % (n, rate))
+    elif mode == MODE_MAX_NUM_BARRIER:
+        for n in np.arange(10, 90, 10):
+            NUM_SIM = 10
+            simulation = 0
+
+            r = 50
+            rate = 0.0
+            while simulation < NUM_SIM:  # or count < 10:
+                simulation += 1
+                start = time()
+
+                dbg = DBG(lenght=200, height=100)
+                dbg.create_sensors_randomly(num_sensor=n, r=r, alpha=np.pi / 3)
+                dbg.build_virtual_nodes()
+
+                shared_array_base = multiprocessing.Array(ctypes.c_double, [np.inf] * dbg.num_virtuals ** 2)
+                shared_array = np.ctypeslib.as_array(shared_array_base.get_obj())
+                misfit = shared_array.reshape(dbg.num_virtuals, dbg.num_virtuals)
+                dbg.build_dbg()
+
+                res = dbg.max_flow()
+
+                print ('time ', time() - start, ', num bar ', res)
+                rate += res
+            rate /= NUM_SIM
+            print ('num bar n=%d : ' % (n), rate)
+            logging.info('num bar n=%d: %f' % (n, rate))
