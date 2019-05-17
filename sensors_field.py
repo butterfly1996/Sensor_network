@@ -821,18 +821,22 @@ class DBG(WBG):
         return g.shortest_paths_dijkstra(s, t, 'weight')[0][0]
 
     def max_flow(self):
+        new_adj = np.full((2 * (self.num_virtuals-2) + 2, 2 * (self.num_virtuals-2) + 2), np.inf)
+        new_adj[:1, :(self.num_virtuals-2) + 2] = self.adj_matrix[:1, :(self.num_virtuals-2) + 2].copy()
+        new_adj[(self.num_virtuals-2) + 2:, 1:(self.num_virtuals-2) + 2] = self.adj_matrix[1:(self.num_virtuals-2) + 1, 1:].copy()
+        new_adj[1:(self.num_virtuals-2) + 1, (self.num_virtuals-2) + 2:] = np.eye((self.num_virtuals-2))
+
+
         # correct Graph
         # print ('remove')
-        temp_adj = self.adj_matrix.copy()
+        temp_adj = new_adj.copy()
         temp_adj[temp_adj == np.inf] = 0
         # print ('remove')
 
+        # print ('zero length')
+        temp_adj[new_adj == 0] = 0.001
+        # print ('zero length')
         g = Graph.Weighted_Adjacency(temp_adj.tolist(), ADJ_DIRECTED)
-        # print ('zero length')
-        xs, ys = np.where(self.adj_matrix == 0)
-        for x, y in zip(xs, ys):
-            g.add_edge(x, y)
-        # print ('zero length')
 
         # round 1
         s = 0
@@ -841,20 +845,6 @@ class DBG(WBG):
         # print ('res 1, ', res1.value)
 
         # round 1
-        # g.es['weight'] = res1.flow  # set weight to flow value
-        # g.delete_edges(np.where(np.array(g.es['weight']) == 0)[0].tolist())  # remove unnecessary edges
-        # conflict_a = {}  # dict, map conflict actual to conflict virtuals
-        # for v in range(g.vcount()):
-        #     if len([e for e in g.get_edgelist() if e[1] == v and e[1] != t]) > 1:  # in degree > 1 and not t
-        #         conflict_a.setdefault(self.vid_to_as[v].id, []).append(v)
-        for v in range(g.vcount()):
-            g.add_vertices(1)
-            new_v = g.vcount() - 1  # split current v to v and new_v
-            g.add_edge(v, new_v)  # inner edge
-            g.add_edges(
-                [(new_v, out) for out in [e[1] for e in g.get_edgelist() if e[0] == v and e[1] != new_v]])  # new_v out
-            g.delete_edges(
-                [g.get_eid(v, out) for out in [e[1] for e in g.get_edgelist() if e[0] == v and e[1] != new_v]])  # v out
         res1 = g.maxflow(s, t)
         print ('res 1, ', res1.value)
 
@@ -902,7 +892,7 @@ if __name__ == '__main__':
     MODE_MIN_COST_BARRIER = 1
     MODE_MAX_NUM_BARRIER = 2
 
-    mode = MODE_MIN_COST_BARRIER
+    mode = MODE_MAX_NUM_BARRIER
 
     if mode == MODE_EXIST_BARRIER:
         for n in np.arange(10, 90, 10):
@@ -932,7 +922,7 @@ if __name__ == '__main__':
             print ('rate n=%d : ' % (n), rate)
             logging.info('rate n=%d: %f' % (n, rate))
     elif mode == MODE_MIN_COST_BARRIER:
-        for r in np.arange(30, 90, 10):
+        for r in np.arange(20, 30, 10):
             NUM_SIM = 50
             simulation = 0
             count = 0
@@ -967,7 +957,7 @@ if __name__ == '__main__':
             logging.info('total angle r=%d: %f' % (n, rate))
     elif mode == MODE_MAX_NUM_BARRIER:
         for n in np.arange(10, 90, 10):
-            NUM_SIM = 10
+            NUM_SIM = 1
             simulation = 0
 
             r = 50
