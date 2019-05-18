@@ -824,7 +824,9 @@ class DBG(WBG):
         new_adj = np.full((2 * (self.num_virtuals-2) + 2, 2 * (self.num_virtuals-2) + 2), np.inf)
         new_adj[:1, :(self.num_virtuals-2) + 2] = self.adj_matrix[:1, :(self.num_virtuals-2) + 2].copy()
         new_adj[(self.num_virtuals-2) + 2:, 1:(self.num_virtuals-2) + 2] = self.adj_matrix[1:(self.num_virtuals-2) + 1, 1:].copy()
-        new_adj[1:(self.num_virtuals-2) + 1, (self.num_virtuals-2) + 2:] = np.eye((self.num_virtuals-2))
+        eye = np.eye((self.num_virtuals - 2))
+        eye[eye == 0] = np.inf
+        new_adj[1:(self.num_virtuals-2) + 1, (self.num_virtuals-2) + 2:] = eye
 
 
         # correct Graph
@@ -851,17 +853,22 @@ class DBG(WBG):
         # round 2
         g.es['weight'] = res1.flow  # set weight to flow value
         g.delete_edges(np.where(np.array(g.es['weight']) == 0)[0].tolist())  # remove unnecessary edges
-        paths = int(res1.value)*[[]]
+        paths = []
         assert len(g.incident(s)) == res1.value, "failed assert"
         for i, e in enumerate(g.incident(s)):
+            path = []
             u = g.get_edgelist()[e][1]
-            paths[i].append(u)
+            #print (e, u)
+            path.append(u)
             while g.get_edgelist()[g.incident(u)[0]][1] != t:
                 u = g.get_edgelist()[g.incident(u)[0]][1]
-                paths[i].append(u)
-        def check_conflict(paths):
-            intersection = set().intersection(*[[self.vid_to_as[v].id for v in path if v < t] for path in paths])
-            return True if len(intersection) > 0 else False
+                #print (u)
+                path.append(u)
+            paths.append(path)
+        #print (paths)
+        #for p in paths:
+            #print ('act paths', [self.vid_to_as[v].id for v in p if v < t])
+            #print ('vir paths', [v for v in p if v < t])
         def get_conflict_path_ids(paths, id):
             path = paths[id]
             ids = [True if len(set([self.vid_to_as[v].id for v in p if v<t]).intersection(set([self.vid_to_as[v].id for v in path if v<t]))) > 0 else False
@@ -956,17 +963,24 @@ if __name__ == '__main__':
             print ('total angle r=%d : ' % (r), rate)
             logging.info('total angle r=%d: %f' % (n, rate))
     elif mode == MODE_MAX_NUM_BARRIER:
-        for n in np.arange(10, 90, 10):
-            NUM_SIM = 1
+        for n in np.arange(10, 50, 10):
+            if n == 10:
+                NUM_SIM = 50
+            elif n == 20:
+                NUM_SIM = 50
+            elif n == 30:
+                NUM_SIM = 30
+            else:
+                NUM_SIM = 20
             simulation = 0
 
-            r = 50
+            r = 30
             rate = 0.0
             while simulation < NUM_SIM:  # or count < 10:
                 simulation += 1
                 start = time()
 
-                dbg = DBG(lenght=200, height=100)
+                dbg = DBG(lenght=100, height=50)
                 dbg.create_sensors_randomly(num_sensor=n, r=r, alpha=np.pi / 3)
                 dbg.build_virtual_nodes()
 
@@ -982,3 +996,4 @@ if __name__ == '__main__':
             rate /= NUM_SIM
             print ('num bar n=%d : ' % (n), rate)
             logging.info('num bar n=%d: %f' % (n, rate))
+
