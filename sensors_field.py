@@ -323,23 +323,6 @@ class WBG(Sensors_field):
             raise ValueError
         self.mode = mode
 
-    def build_disBG(self):
-        ## ma tran ke
-        ## index 0 la s
-        ## index n+1 la t
-        ## tu 1 den n la chi so cua cac sensor
-        self.dis_matrix = np.full((len(self.sensors_list) + 2, len(self.sensors_list) + 2), np.inf)
-        for i, si in enumerate([self.s] + self.sensors_list + [self.t]):
-            for j, sj in enumerate([self.s] + self.sensors_list + [self.t]):
-                if i < j:
-                    if i == 0 and j == len(self.sensors_list) + 1:
-                        continue
-                    self.dis_matrix[i][j] = self.w(si, sj, normalize=False)
-                elif i == j:
-                    self.dis_matrix[i][j] = 0
-                else:
-                    self.dis_matrix[i][j] = self.dis_matrix[j][i]
-
     def build_WBG(self):
         ## ma tran ke
         ## index 0 la s
@@ -559,83 +542,6 @@ class WBG(Sensors_field):
         return locs, (row_ind, col_ind), min_cost
         # locs la vi tri cac target, (row_ind, col_ind) la ghep cap giua dynamic sensor den target, min_cost chi phi minimum
 
-    def add_population(self, num_particles, num_barriers, omega, c1, c2):
-        self.population = Population(self, num_particles, num_barriers, omega, c1, c2)
-
-    def update_views(self, new_views):
-        for i in range(len(self.sensors_list)):
-            self.sensors_list[i].update_view(new_views[i])
-        self.build_disBG()
-
-    def setup_loss(self):
-        self.nei_ids = [set()] * (len(self.sensors_list) + 2)
-        for j in range(len(self.sensors_list)):
-            v = self.sensors_list[j]
-            if v.xi <= v.r:
-                print (j + 1)
-                print (self.nei_ids[0])
-                self.nei_ids[0].add(j + 1)
-                self.nei_ids[j + 1].add(0)
-                print (self.nei_ids[0])
-        print (self.nei_ids[0])
-        for i in range(len(self.sensors_list)):
-            u = self.sensors_list[i]
-            if u.xi >= self.L - u.r:
-                self.nei_ids[-1].add(i + 1)
-                self.nei_ids[i + 1].add(len(self.nei_ids) - 1)
-        for i in range(len(self.sensors_list)):
-            u = self.sensors_list[i]
-            for j in range(len(self.sensors_list)):
-                v = self.sensors_list[j]
-                if len(geom.circle_intersection((u.xi, u.yi, u.r), (v.xi, v.yi, v.r))) > 0 and i != j:
-                    self.nei_ids[i + 1].add(j + 1)
-        self.nei_ids = [list(e) for e in self.nei_ids]
-        print (self.nei_ids[0])
-
-    def loss(self):
-        res = 0.0
-
-        # for j in self.nei_ids[0]:
-        #     v = self.sensors_list[j-1]
-        #     res += self.dis_matrix[0,j]
-        #     res -= v.xR
-        # for i in self.nei_ids[-1]:
-        #     u = self.sensors_list[i-1]
-        #     res += 2*self.dis_matrix[i,-1]
-        #     res -= self.L-u.xL
-
-        for i in range(len(self.sensors_list)):
-            u = self.sensors_list[i]
-            nei_dis_1 = []
-            for ni in self.nei_ids[i + 1]:
-                print (ni)
-                if ni == 0:
-                    nei_dis_1.append(self.dis_matrix[i + 1, 0])
-                elif self.sensors_list[ni - 1].xi <= u.xi:
-                    nei_dis_1.append(self.dis_matrix[i + 1, ni])
-
-            nei_dis_2 = []
-            for ni in self.nei_ids[i + 1]:
-                if ni == len(self.sensors_list) + 1:
-                    nei_dis_2.append(self.dis_matrix[i + 1, -1])
-                elif self.sensors_list[ni - 1].xi > u.xi:
-                    nei_dis_2.append(self.dis_matrix[i + 1, ni])
-
-            # argsort = np.argsort(nei_dis)
-            # if len(self.nei_ids[i+1]) >= 3:
-            #     res -= 5*nei_dis[argsort[3]]
-            if len(self.nei_ids[i + 1]) >= 2:
-                # sorted_nei_ids = np.array(self.nei_ids[i+1])[argsort]
-                # res += nei_dis[argsort[1]]
-                # res -= 2*(max(self.sensors_list[sorted_nei_ids[1]-1].xR, self.sensors_list[sorted_nei_ids[0]-1].xR)\
-                #        -min(self.sensors_list[sorted_nei_ids[1]-1].xL, self.sensors_list[sorted_nei_ids[0]-1].xL))
-                # res -= max(self.sensors_list[sorted_nei_ids[0]-1].xR, u.xR)-min(self.sensors_list[sorted_nei_ids[0]-1].xL, u.xL)
-                # res -= max(self.sensors_list[sorted_nei_ids[1]-1].xR, u.xR)-min(self.sensors_list[sorted_nei_ids[1]-1].xL, u.xL)
-                res += np.min(nei_dis_1) + np.min(nei_dis_2)
-            # elif len(self.nei_ids[i+1]) == 1:
-            #    res -= 2*self.dis_matrix[i+1, self.nei_ids[i+1][0]]
-        return res
-
 
 def fill_mat(params):
     # print ('cccc')
@@ -749,39 +655,8 @@ class DBG(WBG):
         '''
         # print ("inter count %d" % num_inter)
 
-    def build_dbg2(self):
-        pool = multiprocessing.Pool(1)
-        paramlist = list(itertools.product(range(50), range(50)))
-        pool.map(print, paramlist)
-
-    def setup_graph_obj(self):
-        self.g = nx.from_numpy_matrix(self.adj_matrix, create_using=nx.DiGraph)
-        # correction
-        # print ('zero length')
-        xs, ys = np.where(nx.adjacency_matrix(g).to_dense() == 0)
-        for x, y in zip(xs, ys):
-            g.add_weighted_edges_from([(x, y, 0)])
-
-        # print ('remove')
-        xs, ys = np.where(nx.adjacency_matrix(g).to_dense() == np.inf)
-        for x, y in zip(xs, ys):
-            g.remove_edge(x, y)
-
     def show_matrix(self):
         print(self.adj_matrix)
-
-    def dfs(self, s, visited, t):
-        if s not in visited:
-            # print (visited)
-            visited.append(s)
-            if s == t:
-                return True
-            for u in range(self.adj_matrix.shape[1]):
-                if self.adj_matrix[s][u] != np.inf and u != s:
-                    # print ('dfs %d'%u)
-                    self.dfs(u, visited, t)
-            del visited[-1]
-        return False
 
     def dfs2(self, s, t):
         # print ('remove')
@@ -903,7 +778,7 @@ if __name__ == '__main__':
 
     if mode == MODE_EXIST_BARRIER:
         for n in np.arange(10, 90, 10):
-            NUM_SIM = 10
+            NUM_SIM = 100
             simulation = 0
 
             r = 50
@@ -930,7 +805,7 @@ if __name__ == '__main__':
             logging.info('rate n=%d: %f' % (n, rate))
     elif mode == MODE_MIN_COST_BARRIER:
         for r in np.arange(20, 30, 10):
-            NUM_SIM = 50
+            NUM_SIM = 100
             simulation = 0
             count = 0
 
@@ -964,14 +839,7 @@ if __name__ == '__main__':
             logging.info('total angle r=%d: %f' % (n, rate))
     elif mode == MODE_MAX_NUM_BARRIER:
         for n in np.arange(10, 50, 10):
-            if n == 10:
-                NUM_SIM = 50
-            elif n == 20:
-                NUM_SIM = 50
-            elif n == 30:
-                NUM_SIM = 30
-            else:
-                NUM_SIM = 20
+            NUM_SIM = 50
             simulation = 0
 
             r = 30
